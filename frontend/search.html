@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>목적지 검색 - Travel Planner</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .search-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .search-box h1 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+        }
+
+        .filter-group input::placeholder {
+            color: #999;
+        }
+
+        .search-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .search-buttons button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+        }
+
+        .search-buttons .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .search-buttons .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-buttons .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .search-buttons .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .results-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .results-count {
+            color: #666;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sort-options select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.95em;
+        }
+
+        .destinations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .destination-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .destination-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .destination-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .destination-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .destination-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #50C878;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .destination-content {
+            padding: 20px;
+        }
+
+        .destination-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .destination-location {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .destination-description {
+            color: #777;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .destination-themes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .theme-tag {
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .theme-tag.family {
+            background: #FFE5CC;
+            color: #D97706;
+        }
+
+        .theme-tag.couple {
+            background: #FCE7F3;
+            color: #BE185D;
+        }
+
+        .theme-tag.solo {
+            background: #E0E7FF;
+            color: #4C1D95;
+        }
+
+        .destination-activities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .destination-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .destination-actions button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .btn-detail {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-detail:hover {
+            background: #5568d3;
+        }
+
+        .btn-add-itinerary {
+            background: #f0f0f0;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-add-itinerary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f0f0f0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .no-results-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .no-results-text {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .filter-tag {
+            background: #E3F2FD;
+            color: #1976D2;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-tag button {
+            background: none;
+            border: none;
+            color: #1976D2;
+            cursor: pointer;
+            font-weight: 700;
+            padding: 0;
+            font-size: 1.2em;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 40px;
+        }
+
+        .pagination button {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .search-box h1 {
+                font-size: 1.8em;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .search-buttons {
+                flex-direction: column;
+            }
+
+            .destinations-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">✈️ Travel Planner</div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="search.html" class="nav-link active">Search</a>
+                <a href="create-itinerary.html" class="nav-link">Plan</a>
+                <button class="nav-button" id="userMenuBtn">👤 My Account</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Search Section -->
+    <div class="search-container">
+        <div class="search-box">
+            <h1>🌍 여행지 검색</h1>
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="keywordSearch">검색어</label>
+                    <input type="text" id="keywordSearch" placeholder="여행지명, 테마 등">
+                </div>
+                <div class="filter-group">
+                    <label for="themeFilter">테마</label>
+                    <select id="themeFilter">
+                        <option value="">모두</option>
+                        <option value="couple">커플 여행</option>
+                        <option value="family">가족 여행</option>
+                        <option value="solo">혼자 여행</option>
+                        <option value="friends">친구 여행</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="activityFilter">활동</label>
+                    <select id="activityFilter">
+                        <option value="">모두</option>
+                        <option value="beach">🏖️ 해변</option>
+                        <option value="hiking">⛰️ 등산</option>
+                        <option value="culture">🏛️ 문화</option>
+                        <option value="food">🍴 음식</option>
+                        <option value="shopping">🛍️ 쇼핑</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="childrenFilter">아이 동반</label>
+                    <select id="childrenFilter">
+                        <option value="">상관없음</option>
+                        <option value="true">가능</option>
+                        <option value="false">성인만</option>
+                    </select>
+                </div>
+            </div>
+            <div class="search-buttons">
+                <button class="btn-primary" onclick="performSearch()">🔍 검색</button>
+                <button class="btn-secondary" onclick="resetFilters()">초기화</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-section">
+        <div id="activeFilters" class="active-filters"></div>
+
+        <div class="results-header">
+            <div class="results-count">
+                <span id="resultCount">0</span>개의 여행지 찾음
+            </div>
+            <div class="sort-options">
+                <select id="sortBy" onchange="sortResults()">
+                    <option value="name">이름순</option>
+                    <option value="newest">최신순</option>
+                    <option value="popular">인기순</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            검색 중...
+        </div>
+
+        <div id="noResults" class="no-results" style="display: none;">
+            <div class="no-results-icon">😢</div>
+            <div class="no-results-text">검색 결과가 없습니다</div>
+            <p>다른 필터로 시도해보세요</p>
+        </div>
+
+        <div id="destinationsGrid" class="destinations-grid"></div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Travel Planner. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        const API_BASE = "http://localhost:8000/api/v1";
+        let allDestinations = [];
+        let currentPage = 1;
+        const itemsPerPage = 12;
+
+        // Load destinations on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadDestinations();
+        });
+
+        async function loadDestinations() {
+            try {
+                showLoading(true);
+                const response = await fetch(`${API_BASE}/destinations?skip=0&limit=100`);
+                allDestinations = await response.json();
+                displayDestinations(allDestinations);
+                showLoading(false);
+            } catch (error) {
+                console.error('Error loading destinations:', error);
+                showLoading(false);
+            }
+        }
+
+        async function performSearch() {
+            const keyword = document.getElementById('keywordSearch').value;
+            const theme = document.getElementById('themeFilter').value;
+            const activity = document.getElementById('activityFilter').value;
+            const children = document.getElementById('childrenFilter').value;
+
+            try {
+                showLoading(true);
+                const params = new URLSearchParams();
+                if (keyword) params.append('keyword', keyword);
+                if (theme) params.append('theme', theme);
+                if (activity) params.append('activity', activity);
+                if (children) params.append('suitable_for_children', children);
+
+                const response = await fetch(
+                    `${API_BASE}/destinations/search?${params.toString()}`,
+                    { method: 'POST' }
+                );
+                const results = await response.json();
+                allDestinations = results;
+                currentPage = 1;
+                displayDestinations(allDestinations);
+                updateActiveFilters();
+                showLoading(false);
+            } catch (error) {
+                console.error('Error searching:', error);
+                showLoading(false);
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('keywordSearch').value = '';
+            document.getElementById('themeFilter').value = '';
+            document.getElementById('activityFilter').value = '';
+            document.getElementById('childrenFilter').value = '';
+            document.getElementById('activeFilters').innerHTML = '';
+            loadDestinations();
+        }
+
+        function displayDestinations(destinations) {
+            const grid = document.getElementById('destinationsGrid');
+            const count = document.getElementById('resultCount');
+            const noResults = document.getElementById('noResults');
+
+            count.textContent = destinations.length;
+
+            if (destinations.length === 0) {
+                grid.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            noResults.style.display = 'none';
+
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const endIdx = startIdx + itemsPerPage;
+            const pageDestinations = destinations.slice(startIdx, endIdx);
+
+            grid.innerHTML = pageDestinations.map(dest => `
+                <div class="destination-card" onclick="viewDestination(${dest.id})">
+                    <div class="destination-image">
+                        ${dest.images && dest.images[0] ?
+                            `<img src="${dest.images[0]}" alt="${dest.name}">` :
+                            '🌍'
+                        }
+                        <div class="destination-badge">${dest.location}</div>
+                    </div>
+                    <div class="destination-content">
+                        <div class="destination-title">${dest.name}</div>
+                        <div class="destination-location">📍 ${dest.country}</div>
+                        <div class="destination-description">${dest.description}</div>
+
+                        <div class="destination-themes">
+                            ${(dest.themes || []).slice(0, 3).map(theme =>
+                                `<span class="theme-tag ${theme}">${theme}</span>`
+                            ).join('')}
+                        </div>
+
+                        <div class="destination-activities">
+                            ${(dest.activities || []).slice(0, 4).map(activity => {
+                                const icons = {
+                                    'beach': '🏖️',
+                                    'hiking': '⛰️',
+                                    'culture': '🏛️',
+                                    'food': '🍴',
+                                    'shopping': '🛍️',
+                                    'temple': '⛪',
+                                    'museum': '🖼️'
+                                };
+                                return icons[activity] || '📍';
+                            }).join('')}
+                        </div>
+
+                        <div class="destination-actions">
+                            <button class="btn-detail">자세히 보기</button>
+                            <button class="btn-add-itinerary" onclick="event.stopPropagation(); addToItinerary(${dest.id})">
+                                ➕ 추가
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            displayPagination(destinations.length);
+        }
+
+        function displayPagination(total) {
+            const pages = Math.ceil(total / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+
+            if (pages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            for (let i = 1; i <= pages; i++) {
+                html += `
+                    <button
+                        class="page-btn ${i === currentPage ? 'active' : ''}"
+                        onclick="goToPage(${i})"
+                    >
+                        ${i}
+                    </button>
+                `;
+            }
+            pagination.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            displayDestinations(allDestinations);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function sortResults() {
+            const sortBy = document.getElementById('sortBy').value;
+
+            switch(sortBy) {
+                case 'name':
+                    allDestinations.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 'newest':
+                    allDestinations.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    break;
+                case 'popular':
+                    allDestinations.sort((a, b) => (b.themes?.length || 0) - (a.themes?.length || 0));
+                    break;
+            }
+
+            currentPage = 1;
+            displayDestinations(allDestinations);
+        }
+
+        function updateActiveFilters() {
+            const filters = [];
+            const keyword = document.getElementById('keywordSearch').value;
+            const theme = document.getElementById('themeFilter').value;
+            const activity = document.getElementById('activityFilter').value;
+            const children = document.getElementById('childrenFilter').value;
+
+            if (keyword) filters.push({ name: '검색어', value: keyword });
+            if (theme) filters.push({ name: '테마', value: theme });
+            if (activity) filters.push({ name: '활동', value: activity });
+            if (children) filters.push({ name: '아이 동반', value: children });
+
+            const filterContainer = document.getElementById('activeFilters');
+            filterContainer.innerHTML = filters.map(f => `
+                <div class="filter-tag">
+                    <span>${f.name}: ${f.value}</span>
+                    <button onclick="clearFilter('${f.name}')">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function clearFilter(filterName) {
+            if (filterName === '검색어') document.getElementById('keywordSearch').value = '';
+            if (filterName === '테마') document.getElementById('themeFilter').value = '';
+            if (filterName === '활동') document.getElementById('activityFilter').value = '';
+            if (filterName === '아이 동반') document.getElementById('childrenFilter').value = '';
+            performSearch();
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        }
+
+        function viewDestination(destId) {
+            // Navigate to detail page (will be created later)
+            alert(`여행지 ${destId} 상세 정보`);
+        }
+
+        function addToItinerary(destId) {
+            // Add to current itinerary or create new one
+            alert(`여행지 ${destId}를 일정에 추가했습니다!`);
+        }
+    </script>
+</body>
+</html>
