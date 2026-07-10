@@ -1,36 +1,26 @@
-# Multi-stage build
-FROM python:3.11-slim as backend-builder
+﻿FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including nginx
 RUN apt-get update && apt-get install -y \
+    nginx \
     postgresql-client \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies
+# Copy requirements and install Python dependencies
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY backend/app ./app
 
-# Final stage - with nginx
-FROM nginx:alpine
+# Copy frontend
+COPY frontend /var/www/html
 
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
-
-# Copy frontend to nginx
-COPY frontend /usr/share/nginx/html
-
-# Copy Python app from builder
-COPY --from=backend-builder /app /app
-
-# Install Python and dependencies
-RUN apk add --no-cache python3 py3-pip curl && \
-    pip install --no-cache-dir uvicorn fastapi python-multipart pydantic sqlalchemy psycopg2-binary python-jose passlib python-dotenv qrcode pillow aiofiles httpx requests alembic pytz pydantic-settings email-validator
 
 # Create static directory for QR codes
 RUN mkdir -p /app/static/qr_codes
