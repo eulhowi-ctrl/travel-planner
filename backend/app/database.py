@@ -9,7 +9,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database URL from environment
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./travel_planner.db")
+# Use /tmp for SQLite in production environments where /app might be read-only
+if os.getenv("ENVIRONMENT") == "production" or not os.access(".", os.W_OK):
+    db_path = "/tmp/travel_planner.db"
+else:
+    db_path = "./travel_planner.db"
+
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{db_path}")
 
 # Create database engine
 if DATABASE_URL.startswith("sqlite"):
