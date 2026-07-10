@@ -59,15 +59,6 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 # ==================== Health Check ====================
-@app.get("/")
-async def root():
-    """Root endpoint - health check"""
-    return {
-        "message": "Welcome to Travel Planner API",
-        "version": "1.0.0",
-        "docs": "/docs"
-    }
-
 
 @app.get("/health")
 async def health_check():
@@ -99,6 +90,11 @@ app.include_router(itineraries.router, prefix="/api/v1/itineraries", tags=["itin
 app.include_router(budgets.router, prefix="/api/v1/budgets", tags=["budgets"])
 app.include_router(transportation.router, prefix="/api/v1/transportation", tags=["transportation"])
 app.include_router(qrcodes.router, prefix="/api/v1/qr-codes", tags=["qr-codes"])
+
+# Mount frontend at root (SPA fallback to index.html)
+frontend_dir = Path(__file__).parent.parent.parent / "frontend"
+if frontend_dir.exists():
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 
 if __name__ == "__main__":
