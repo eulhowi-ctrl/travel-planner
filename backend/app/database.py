@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database URL from environment
-# Use /tmp for SQLite in production to avoid permission issues
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/travel_planner.db")
+# Use in-memory SQLite for production (faster performance)
+# Data is not persisted across restarts, but provides optimal performance for Render
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
 
 # Create database engine
 if DATABASE_URL.startswith("sqlite"):
