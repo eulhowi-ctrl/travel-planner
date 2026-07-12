@@ -11,17 +11,7 @@ from app.database import engine, init_db, SessionLocal
 # Create tables on startup
 Base.metadata.create_all(bind=engine)
 
-# Load sample data on startup (in-memory database, so data persists during app lifecycle)
-try:
-    from app.utils.seed_data import seed_destinations, seed_long_distance_transportation, seed_local_transportation
-    db = SessionLocal()
-    seed_destinations(db)
-    seed_long_distance_transportation(db)
-    seed_local_transportation(db)
-    db.close()
-    print("✅ Sample data loaded successfully")
-except Exception as e:
-    print(f"⚠️  Sample data loading skipped: {e}")
+print("✅ Database initialized successfully")
 
 # Initialize FastAPI app
 app = FastAPI(
