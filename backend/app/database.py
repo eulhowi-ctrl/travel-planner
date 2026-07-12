@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import StaticPool, NullPool
 from typing import Generator
 import os
 from dotenv import load_dotenv
@@ -9,16 +9,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database URL from environment
-# Use in-memory SQLite for production (faster performance)
-# Data is not persisted across restarts, but provides optimal performance for Render
+# Use in-memory SQLite with StaticPool for stability
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
 
 # Create database engine
 if DATABASE_URL.startswith("sqlite"):
-    # SQLite doesn't support NullPool
+    # SQLite with StaticPool for in-memory database stability
     engine = create_engine(
         DATABASE_URL,
         connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
         echo=os.getenv("DEBUG", "False") == "True"
     )
 else:
