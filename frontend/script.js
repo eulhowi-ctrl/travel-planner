@@ -3,61 +3,7 @@ const API_BASE_URL = "/api/v1";
 const AUTH_TOKEN_KEY = "travel_planner_token";
 
 // ==================== Modal Functions ====================
-function showLoginModal() {
-    document.getElementById("loginModal").classList.add("show");
-}
-
-function closeLoginModal() {
-    document.getElementById("loginModal").classList.remove("show");
-}
-
-function showRegisterModal() {
-    document.getElementById("registerModal").classList.add("show");
-}
-
-function closeRegisterModal() {
-    document.getElementById("registerModal").classList.remove("show");
-}
-
-function switchToLogin() {
-    closeRegisterModal();
-    showLoginModal();
-}
-
-function switchToRegister() {
-    closeLoginModal();
-    showRegisterModal();
-}
-
-// Prevent modal from closing when clicking outside - only X button closes modals
-window.addEventListener('load', function() {
-    const loginModal = document.getElementById("loginModal");
-    const registerModal = document.getElementById("registerModal");
-    const loginContent = loginModal?.querySelector(".modal-content");
-    const registerContent = registerModal?.querySelector(".modal-content");
-
-    // Setup click handler for login modal
-    if (loginModal && loginContent) {
-        loginModal.addEventListener('click', function(e) {
-            // Only close if clicking on the modal background, not the content
-            if (e.target === loginModal) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        });
-    }
-
-    // Setup click handler for register modal
-    if (registerModal && registerContent) {
-        registerModal.addEventListener('click', function(e) {
-            // Only close if clicking on the modal background, not the content
-            if (e.target === registerModal) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        });
-    }
-});
+// Removed: Login and Register modal functionality
 
 // ==================== Authentication Functions ====================
 async function login(email, password) {
@@ -129,28 +75,7 @@ function getAuthToken() {
 }
 
 // ==================== Form Event Listeners ====================
-const loginForm = document.getElementById("loginForm");
-if (loginForm) {
-    loginForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const email = e.target.querySelector("input[type='email']").value;
-        const password = e.target.querySelector("input[type='password']").value;
-        login(email, password);
-    });
-}
-
-const registerForm = document.getElementById("registerForm");
-if (registerForm) {
-    registerForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const inputs = e.target.querySelectorAll("input");
-        const email = inputs[0].value;
-        const username = inputs[1].value;
-        const password = inputs[2].value;
-        const passwordConfirm = inputs[3].value;
-        register(email, username, password, passwordConfirm);
-    });
-}
+// Removed: Login and Register form event listeners
 
 // ==================== API Helper Functions ====================
 async function fetchAPI(endpoint, options = {}) {
@@ -232,18 +157,22 @@ function scanQRCode() {
 
 // ==================== Page Initialization ====================
 document.addEventListener("DOMContentLoaded", () => {
-    // Update UI based on authentication status
-    if (isAuthenticated()) {
-        const authButtons = document.querySelector(".auth-buttons");
-        if (authButtons) {
-            authButtons.innerHTML = `
-                <button class="btn btn-secondary" onclick="logout()">로그아웃</button>
-            `;
-        }
-    }
-
     // Initialize page-specific functions
     initializePage();
 });
 
-// Page-specific initialization (overri
+// Page-specific initialization (override in each page)
+function initializePage() {
+    // To be overridden in specific pages
+}
+
+// ==================== Export for use in other pages ====================
+// These functions are available globally for use in other HTML files
+window.logout = logout;
+window.fetchAPI = fetchAPI;
+window.showLoading = showLoading;
+window.hideLoading = hideLoading;
+window.showNotification = showNotification;
+window.formatDate = formatDate;
+window.formatCurrency = formatCurrency;
+window.isAuthenticated = isAuthenticated;

@@ -17,10 +17,6 @@
                 <li><a href="#how-it-works">사용 방법</a></li>
                 <li><a href="#" onclick="window.location.href='search.html'">여행지 검색</a></li>
             </ul>
-            <div class="auth-buttons">
-                <button class="btn btn-secondary" onclick="showLoginModal()">로그인</button>
-                <button class="btn btn-primary" onclick="showRegisterModal()">회원가입</button>
-            </div>
         </div>
     </nav>
 
@@ -172,34 +168,6 @@
         </div>
     </footer>
 
-    <!-- Modals -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeLoginModal()">&times;</span>
-            <h2>로그인</h2>
-            <form id="loginForm">
-                <input type="email" placeholder="이메일" required>
-                <input type="password" placeholder="비밀번호" required>
-                <button type="submit" class="btn btn-primary">로그인</button>
-            </form>
-            <p>계정이 없으신가요? <a href="#" onclick="switchToRegister()">회원가입</a></p>
-        </div>
-    </div>
-
-    <div id="registerModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeRegisterModal()">&times;</span>
-            <h2>회원가입</h2>
-            <form id="registerForm">
-                <input type="email" placeholder="이메일" required>
-                <input type="text" placeholder="사용자 이름" required>
-                <input type="password" placeholder="비밀번호" required>
-                <input type="password" placeholder="비밀번호 확인" required>
-                <button type="submit" class="btn btn-primary">회원가입</button>
-            </form>
-            <p>이미 계정이 있으신가요? <a href="#" onclick="switchToLogin()">로그인</a></p>
-        </div>
-    </div>
 
     <script src="script.js"></script>
 </body>
