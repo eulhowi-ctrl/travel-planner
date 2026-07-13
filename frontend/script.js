@@ -4,19 +4,19 @@ const AUTH_TOKEN_KEY = "travel_planner_token";
 
 // ==================== Modal Functions ====================
 function showLoginModal() {
-    document.getElementById("loginModal").style.display = "block";
+    document.getElementById("loginModal").classList.add("show");
 }
 
 function closeLoginModal() {
-    document.getElementById("loginModal").style.display = "none";
+    document.getElementById("loginModal").classList.remove("show");
 }
 
 function showRegisterModal() {
-    document.getElementById("registerModal").style.display = "block";
+    document.getElementById("registerModal").classList.add("show");
 }
 
 function closeRegisterModal() {
-    document.getElementById("registerModal").style.display = "none";
+    document.getElementById("registerModal").classList.remove("show");
 }
 
 function switchToLogin() {
@@ -29,18 +29,35 @@ function switchToRegister() {
     showRegisterModal();
 }
 
-// Close modal when clicking outside
-window.onclick = function(event) {
+// Prevent modal from closing when clicking outside - only X button closes modals
+window.addEventListener('load', function() {
     const loginModal = document.getElementById("loginModal");
     const registerModal = document.getElementById("registerModal");
+    const loginContent = loginModal?.querySelector(".modal-content");
+    const registerContent = registerModal?.querySelector(".modal-content");
 
-    if (event.target === loginModal) {
-        loginModal.style.display = "none";
+    // Setup click handler for login modal
+    if (loginModal && loginContent) {
+        loginModal.addEventListener('click', function(e) {
+            // Only close if clicking on the modal background, not the content
+            if (e.target === loginModal) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
     }
-    if (event.target === registerModal) {
-        registerModal.style.display = "none";
+
+    // Setup click handler for register modal
+    if (registerModal && registerContent) {
+        registerModal.addEventListener('click', function(e) {
+            // Only close if clicking on the modal background, not the content
+            if (e.target === registerModal) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
     }
-}
+});
 
 // ==================== Authentication Functions ====================
 async function login(email, password) {
@@ -229,24 +246,4 @@ document.addEventListener("DOMContentLoaded", () => {
     initializePage();
 });
 
-// Page-specific initialization (override in each page)
-function initializePage() {
-    // To be overridden in specific pages
-}
-
-// ==================== Export for use in other pages ====================
-// These functions are available globally for use in other HTML files
-window.showLoginModal = showLoginModal;
-window.closeLoginModal = closeLoginModal;
-window.showRegisterModal = showRegisterModal;
-window.closeRegisterModal = closeRegisterModal;
-window.switchToLogin = switchToLogin;
-window.switchToRegister = switchToRegister;
-window.logout = logout;
-window.fetchAPI = fetchAPI;
-window.showLoading = showLoading;
-window.hideLoading = hideLoading;
-window.showNotification = showNotification;
-window.formatDate = formatDate;
-window.formatCurrency = formatCurrency;
-window.isAuthenticated = isAuthenticated;
+// Page-specific initialization (overri
