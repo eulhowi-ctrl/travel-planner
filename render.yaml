@@ -10,10 +10,10 @@ services:
       - key: DEBUG
         value: false
     region: oregon
-    plan: standard
+    plan: free
 
 databases:
   - name: travel_planner_db
     databaseName: travel_planner_db
     user: travel_user
-    plan: standard
+    plan: free
