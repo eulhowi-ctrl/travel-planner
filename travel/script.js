@@ -54,6 +54,19 @@ function photoUrl(seed, w = 400, h = 300) {
     return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
 }
 
+// ==================== External Price Check (deep-link, no API) ====================
+// We don't have a live flight/hotel pricing API, so these hand off to Naver's
+// general search — its own flight/hotel comparison widgets surface from there,
+// and unlike a hand-built flight.naver.com URL, this endpoint won't break when
+// Naver changes their booking-flow URL scheme.
+function naverFlightSearchUrl(cityName) {
+    return `https://search.naver.com/search.naver?query=${encodeURIComponent(cityName + ' 항공권')}`;
+}
+
+function naverHotelSearchUrl(cityName) {
+    return `https://search.naver.com/search.naver?query=${encodeURIComponent(cityName + ' 호텔')}`;
+}
+
 // ==================== Toast ====================
 function showToast(message, type = 'default', duration = 2600) {
     let container = document.getElementById('toast-container');

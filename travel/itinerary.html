@@ -15,6 +15,7 @@
     .day-tab.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
 
     #weatherWidget { margin-bottom: 24px; }
+    #priceCheckSection { margin-bottom: 24px; }
     #transportSection { margin-bottom: 24px; }
     #localTipsSection { margin-bottom: 24px; }
 
@@ -66,6 +67,7 @@
         </div>
 
         <div id="weatherWidget"></div>
+        <div id="priceCheckSection"></div>
 
         <div class="day-tabs" id="dayTabs"></div>
         <div id="transportSection"></div>
@@ -307,6 +309,22 @@
             `;
         }
 
+        function renderPriceCheckSection() {
+            const el = document.getElementById('priceCheckSection');
+            el.innerHTML = `
+                <div class="card" style="padding:20px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                    <div>
+                        <strong>💸 실시간 항공권 · 숙소 가격 확인</strong>
+                        <p class="text-muted" style="font-size:13px; margin-top:4px;">네이버에서 ${ITINERARY.city}의 실제 가격을 확인해보세요</p>
+                    </div>
+                    <div class="flex gap-8">
+                        <a href="${naverFlightSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">✈️ 항공권 확인</a>
+                        <a href="${naverHotelSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🏨 숙소 확인</a>
+                    </div>
+                </div>
+            `;
+        }
+
         function renderTransportSection() {
             const data = TRANSPORT_DATA[ITINERARY.city];
             const el = document.getElementById('transportSection');
@@ -471,6 +489,7 @@
                 ? '2026.08.14 - 2026.08.17 · 2인'
                 : `총 ${ITINERARY.dayCount}일 일정 · 2인`;
             renderWeatherWidget('weatherWidget', ITINERARY.city);
+            renderPriceCheckSection();
             renderTransportSection();
             renderLocalTips();
             renderDayTabs();
