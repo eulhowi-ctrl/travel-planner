@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>포인트 - TRAVOL</title>
+<title>포인트 - TRAVEL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -82,9 +82,9 @@
         let historyFilter = 'all';
 
         function ensureWelcomeBonus() {
-            const data = getTravolPoints();
+            const data = getTravelPoints();
             if (data.balance === 0 && data.history.length === 0) {
-                earnPoints('TRAVOL 가입 축하 포인트', 5000);
+                earnPoints('TRAVEL 가입 축하 포인트', 5000);
             }
         }
 
@@ -95,7 +95,7 @@
         }
 
         function renderHero() {
-            const data = getTravolPoints();
+            const data = getTravelPoints();
             document.getElementById('balanceDisplay').textContent = data.balance.toLocaleString() + 'P';
             const tier = currentTier(data.balance);
             document.getElementById('tierLabel').textContent = `${tier.name} 등급`;
@@ -105,7 +105,7 @@
         }
 
         function renderRedemptions() {
-            const data = getTravolPoints();
+            const data = getTravelPoints();
             document.getElementById('redemptionGrid').innerHTML = REDEMPTIONS.map((r, i) => `
                 <div class="card redemption-card">
                     <div style="font-size:32px;">${r.emoji}</div>
@@ -117,11 +117,11 @@
             document.querySelectorAll('[data-redeem]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const item = REDEMPTIONS[Number(btn.dataset.redeem)];
-                    const data = getTravolPoints();
+                    const data = getTravelPoints();
                     if (data.balance < item.cost) { showToast('포인트가 부족합니다', 'error'); return; }
                     data.balance -= item.cost;
                     data.history.unshift({ desc: `${item.label} 교환`, points: -item.cost, date: new Date().toISOString() });
-                    setLS('travolPoints', data);
+                    setLS('travelPoints', data);
                     showToast(`${item.label}으로 교환했습니다`, 'success');
                     renderAll();
                 });
@@ -129,7 +129,7 @@
         }
 
         function renderHistory() {
-            const data = getTravolPoints();
+            const data = getTravelPoints();
             let list = data.history;
             if (historyFilter === 'earn') list = list.filter(h => h.points > 0);
             if (historyFilter === 'use') list = list.filter(h => h.points < 0);

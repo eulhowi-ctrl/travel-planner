@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>여행지 검색 - TRAVOL</title>
+<title>여행지 검색 - TRAVEL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -41,7 +41,7 @@
     .view-toggle button.active { background: var(--color-white); box-shadow: var(--shadow-sm); color: var(--color-primary); }
 
     .dest-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-    .dest-card-img { height: 160px; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); display: flex; align-items: center; justify-content: center; font-size: 48px; }
+    .dest-card-img { height: 160px; }
     .dest-card-body { padding: 16px; }
     .dest-card-body h3 { font-size: 16px; margin-bottom: 4px; }
     .dest-card-meta { font-size: 12px; color: var(--color-gray-500); margin-bottom: 10px; }
@@ -54,11 +54,19 @@
     #mapView { height: 560px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
     #mapView.hidden { display: none; }
 
+    .price-bubble {
+        background: var(--color-white); color: var(--color-dark); font-weight: 700; font-size: 12.5px;
+        padding: 6px 12px; border-radius: var(--radius-pill); box-shadow: var(--shadow-sm);
+        border: 1.5px solid var(--color-white); white-space: nowrap; cursor: pointer; transition: all 0.12s ease;
+    }
+    .price-bubble:hover, .price-bubble.active { background: var(--color-dark); color: #fff; transform: scale(1.08); z-index: 10; }
+    .leaflet-div-icon.price-marker-wrap { background: transparent; border: none; }
+
     .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 40px; }
     .pagination button { width: 36px; height: 36px; border-radius: 50%; font-size: 13px; font-weight: 600; color: var(--color-gray-700); }
     .pagination button.active { background: var(--color-primary); color: #fff; }
 
-    .dest-modal-img { height: 220px; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 64px; margin-bottom: 16px; }
+    .dest-modal-img { height: 220px; border-radius: var(--radius-md); margin-bottom: 16px; }
     .link-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
 
     @media (max-width: 900px) {
@@ -200,6 +208,18 @@
             '도쿄': 'https://cafe.naver.com/tokyostyle',
         };
 
+        // Local tips per city (TripAdvisor-style "insider tips"), with a generic fallback
+        // for the many generated destinations that don't have hand-written tips yet.
+        const LOCAL_TIPS = {
+            '부산': ['자갈치시장은 오전 일찍 가야 활어 상태가 가장 좋아요.', '광안리보다 송정이 한적하고 서핑하기 좋아요.'],
+            '제주도': ['렌트카는 성수기에 미리 예약하지 않으면 가격이 2배 이상 뜁니다.', '동쪽 해안도로는 일출, 서쪽은 노을 명소로 유명해요.'],
+            '도쿄': ['교통카드(Suica/Pasmo)는 편의점에서도 충전 가능해요.', '평일 점심 세트 메뉴가 저녁보다 훨씬 저렴합니다.'],
+            '교토': ['사찰은 개장 직후 방문해야 인파를 피할 수 있어요.', '기온 거리는 이른 아침이 가장 사진 찍기 좋습니다.'],
+            '방콕': ['그랩(Grab) 앱이 일반 택시보다 바가지 위험이 적어요.', '왕궁은 복장 규정이 있으니 어깨/무릎을 가려야 해요.'],
+            '파리': ['박물관 패스를 사면 루브르 등 주요 관광지 줄서기를 건너뛸 수 있어요.', '카페는 테라스석이 실내석보다 비쌀 수 있어요.'],
+        };
+        const GENERIC_TIPS = ['현지인들은 관광지보다 골목 안쪽 식당을 더 선호해요.', '성수기 주말은 피하고 평일에 방문하면 훨씬 여유롭습니다.'];
+
         const state = {
             keyword: '', country: '', theme: null, priceMin: 0, priceMax: 500,
             duration: null, accessibility: null, season: null, activity: null,
@@ -274,7 +294,7 @@
             const isWished = wishlist.folders.some(f => f.items.some(i => i.id === d.id));
             return `
                 <div class="card">
-                    <div class="dest-card-img">${d.emoji}</div>
+                    <div class="dest-card-img photo-tile" style="background-image:url('${photoUrl('dest-' + d.id)}');"><span class="tile-emoji-badge">${d.emoji}</span></div>
                     <div class="dest-card-body">
                         <div class="flex-between">
                             <h3>${d.name}</h3>
@@ -322,7 +342,13 @@
 
             const capped = filtered.slice(0, 200);
             capped.forEach(d => {
-                const marker = L.marker([d.lat, d.lng]).addTo(leafletMap);
+                // Airbnb-style price bubble marker instead of a plain pin.
+                const priceIcon = L.divIcon({
+                    className: 'price-marker-wrap',
+                    html: `<div class="price-bubble" data-marker-id="${d.id}">${d.price}만</div>`,
+                    iconSize: null,
+                });
+                const marker = L.marker([d.lat, d.lng], { icon: priceIcon }).addTo(leafletMap);
                 const popupHtml = `
                     <div style="font-family:'Inter',sans-serif; min-width:160px;">
                         <strong>${d.emoji} ${d.name}</strong>
@@ -332,6 +358,13 @@
                     </div>
                 `;
                 marker.bindPopup(popupHtml);
+                marker.on('click', () => {
+                    document.querySelectorAll('.price-bubble.active').forEach(el => el.classList.remove('active'));
+                    document.querySelector(`.price-bubble[data-marker-id="${d.id}"]`)?.classList.add('active');
+                });
+                marker.on('popupclose', () => {
+                    document.querySelector(`.price-bubble[data-marker-id="${d.id}"]`)?.classList.remove('active');
+                });
                 marker.on('popupopen', () => {
                     document.querySelector(`[data-map-detail="${d.id}"]`)?.addEventListener('click', () => openModal(d.id));
                 });
@@ -373,8 +406,10 @@
 
         function openModal(id) {
             const d = DESTINATIONS.find(x => x.id === id);
+            const cityKey = d.baseCity || d.name;
+            const tips = LOCAL_TIPS[cityKey] || GENERIC_TIPS;
             document.getElementById('modalContent').innerHTML = `
-                <div class="dest-modal-img">${d.emoji}</div>
+                <div class="dest-modal-img photo-tile" style="background-image:url('${photoUrl('dest-' + d.id)}');"><span class="tile-emoji-badge">${d.emoji}</span></div>
                 <h2>${d.name}</h2>
                 <p class="text-muted mb-16">${d.country} · ★ ${d.rating} · ${d.price}만원~</p>
                 <div class="dest-card-tags mb-16">${d.tags.map(t => `<span class="badge badge-primary">${t}</span>`).join('')}</div>
@@ -383,8 +418,14 @@
                     <button class="btn btn-secondary" id="modalItineraryBtn">일정에 담기</button>
                 </div>
                 <div class="link-row">
-                    ${NAVER_CAFES[d.name] ? `<a href="${NAVER_CAFES[d.name]}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">📎 네이버 여행 카페</a>` : ''}
+                    ${NAVER_CAFES[cityKey] ? `<a href="${NAVER_CAFES[cityKey]}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">📎 네이버 여행 카페</a>` : ''}
                     <a href="https://map.naver.com/p/search/${encodeURIComponent(d.name)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">🗺️ 네이버맵</a>
+                </div>
+                <div class="mt-24" style="background:var(--color-light); border-radius:var(--radius-sm); padding:14px 16px;">
+                    <strong style="font-size:13px;">🧭 현지인 팁</strong>
+                    <ul style="margin-top:8px;">
+                        ${tips.map(t => `<li style="font-size:13px; color:var(--color-gray-700); margin-bottom:6px;">· ${t}</li>`).join('')}
+                    </ul>
                 </div>
             `;
             document.getElementById('modalWishBtn').addEventListener('click', () => { toggleWish(id); closeModal(); });

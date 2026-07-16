@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 챗봇 - TRAVOL</title>
+<title>AI 챗봇 - TRAVEL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -31,7 +31,7 @@
     <div id="header-root"></div>
 
     <div class="container chat-wrap">
-        <h1 class="mb-16">TRAVOL AI 챗봇</h1>
+        <h1 class="mb-16">TRAVEL AI 챗봇</h1>
         <div class="chat-window">
             <div class="chat-messages" id="chatMessages"></div>
             <div class="quick-replies" id="quickReplies"></div>
@@ -47,7 +47,7 @@
     <script>
         // Rule-based intent engine (8 intents). Swap for a backend LLM call when available.
         const INTENTS = [
-            { name: 'greeting', keywords: ['안녕', '하이', 'ㅎㅇ'], reply: '안녕하세요! TRAVOL 여행 도우미입니다. 여행지 추천, 예산, 날씨, 일정에 대해 물어보세요 😊' },
+            { name: 'greeting', keywords: ['안녕', '하이', 'ㅎㅇ'], reply: '안녕하세요! TRAVEL 여행 도우미입니다. 여행지 추천, 예산, 날씨, 일정에 대해 물어보세요 😊' },
             { name: 'family', keywords: ['가족', '아이', '부모님'], reply: '가족 여행이라면 제주도나 싱가포르를 추천해요! 접근성과 안전한 활동 위주로 골라봤어요.', recommend: ['제주도', '싱가포르'] },
             { name: 'couple', keywords: ['커플', '연인', '신혼'], reply: '커플 여행엔 파리나 교토가 인기가 많아요. 로맨틱한 야경 명소도 함께 안내해드릴게요.', recommend: ['파리', '교토'] },
             { name: 'solo', keywords: ['혼자', '혼행', '나홀로'], reply: '혼행이라면 도쿄나 런던처럼 대중교통이 편한 도시가 좋아요.', recommend: ['도쿄', '런던'] },
@@ -135,7 +135,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            addMessage('안녕하세요! TRAVOL AI 여행 도우미입니다. 무엇을 도와드릴까요?', 'bot');
+            addMessage('안녕하세요! TRAVEL AI 여행 도우미입니다. 무엇을 도와드릴까요?', 'bot');
 
             const quick = ['가족 여행 추천해줘', '예산 관리 어떻게 해?', '날씨 알려줘', '포인트 어떻게 써?'];
             document.getElementById('quickReplies').innerHTML = quick.map(q => `<button class="chip">${q}</button>`).join('');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>여행 일정 - TRAVOL</title>
+<title>여행 일정 - TRAVEL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -16,6 +16,7 @@
 
     #weatherWidget { margin-bottom: 24px; }
     #transportSection { margin-bottom: 24px; }
+    #localTipsSection { margin-bottom: 24px; }
 
     .schedule-item { display: grid; grid-template-columns: 90px 1fr; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--color-gray-100); }
     .schedule-time { font-weight: 700; color: var(--color-primary); font-size: 14px; }
@@ -68,6 +69,7 @@
 
         <div class="day-tabs" id="dayTabs"></div>
         <div id="transportSection"></div>
+        <div id="localTipsSection"></div>
         <div id="scheduleContainer"></div>
 
         <section class="section">
@@ -219,6 +221,29 @@
             },
         };
 
+        // Local (insider) tips, separate from the transport-specific tip above.
+        const LOCAL_TIPS = {
+            '부산': [
+                '자갈치시장은 오전 일찍 가야 활어 상태가 가장 좋아요.',
+                '광안리보다 송정이 한적하고 서핑하기 좋아요.',
+                '해운대 주차는 주말엔 꽉 차니 지하철 이용을 추천해요.',
+            ],
+        };
+
+        function renderLocalTips() {
+            const tips = LOCAL_TIPS[ITINERARY.city];
+            const el = document.getElementById('localTipsSection');
+            if (!tips) { el.innerHTML = ''; return; }
+            el.innerHTML = `
+                <div class="card" style="padding:20px 24px;">
+                    <h4 class="mb-16">🧭 현지인 팁</h4>
+                    <ul>
+                        ${tips.map(t => `<li style="font-size:13px; color:var(--color-gray-700); margin-bottom:8px;">· ${t}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
         function renderTransportSection() {
             const data = TRANSPORT_DATA[ITINERARY.city];
             const el = document.getElementById('transportSection');
@@ -354,7 +379,7 @@
                         ${Object.entries(r.categories).map(([k,v]) => `<span class="chip">${catLabels[k]} ${v}.0</span>`).join('')}
                     </div>
                     <p class="text-muted">${r.comment}</p>
-                    ${r.photos.length ? `<div class="flex gap-8 mt-16">${r.photos.map(p => `<div style="width:56px;height:56px;border-radius:8px;background:var(--color-gray-100);display:flex;align-items:center;justify-content:center;font-size:24px;">${p}</div>`).join('')}</div>` : ''}
+                    ${r.photos.length ? `<div class="flex gap-8 mt-16">${r.photos.map((p, i) => `<div style="width:56px;height:56px;border-radius:8px;background-image:url('${photoUrl('review-' + r.id + '-' + i)}');background-size:cover;background-position:center;"></div>`).join('')}</div>` : ''}
                     ${r.hostReply ? `<div class="mt-16" style="background:var(--color-light); border-radius:var(--radius-sm); padding:12px 14px;"><strong style="font-size:13px;">🏠 호스트 답글</strong><p style="font-size:13px; margin-top:4px;">${r.hostReply}</p></div>` : ''}
                     <button class="btn btn-ghost btn-small mt-16" data-vote="${r.id}">👍 도움됐어요${votes[r.id] ? ' <span class="text-primary">✓</span>' : ''} (${r.helpfulCount + (votes[r.id] ? 1 : 0)})</button>
                 </div>
@@ -375,14 +400,15 @@
             const el = document.getElementById('qrDisplay');
             let data, label;
             if (type === 'link') { data = window.location.href; label = '이 일정 공유 링크'; }
-            if (type === 'wifi') { data = buildWifiQrData('TRAVOL_GUEST', 'travol1234'); label = '숙소 와이파이 (SSID: TRAVOL_GUEST)'; }
-            if (type === 'contact') { data = buildContactQrData({ name: '김준호', phone: '010-1234-5678', email: 'host@travol.com' }); label = '호스트 연락처 저장'; }
+            if (type === 'wifi') { data = buildWifiQrData('TRAVEL_GUEST', 'travel1234'); label = '숙소 와이파이 (SSID: TRAVEL_GUEST)'; }
+            if (type === 'contact') { data = buildContactQrData({ name: '김준호', phone: '010-1234-5678', email: 'host@travel.com' }); label = '호스트 연락처 저장'; }
             el.innerHTML = `<img src="${buildQrUrl(data)}" alt="QR code" width="180" height="180"><p class="text-muted">${label}</p>`;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             renderWeatherWidget('weatherWidget', ITINERARY.city);
             renderTransportSection();
+            renderLocalTips();
             renderDayTabs();
             renderSchedule(0);
             renderBudgetAnalysis();

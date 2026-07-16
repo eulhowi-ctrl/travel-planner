@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>패키지 - TRAVOL</title>
+<title>패키지 - TRAVEL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -12,15 +12,16 @@
     .deal-timer { font-size: 24px; font-weight: 700; font-family: var(--font-heading); }
 
     .package-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 20px; }
-    .package-card .ph { height: 150px; display:flex; align-items:center; justify-content:center; font-size:48px; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); position: relative; }
+    .package-card .ph { height: 150px; }
     .discount-badge { position: absolute; top: 12px; left: 12px; background: var(--color-secondary); color: #fff; padding: 4px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; }
+    .package-card .tile-emoji-badge { right: 10px; left: auto; }
     .package-body { padding: 16px; }
     .price-row { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
     .price-original { text-decoration: line-through; color: var(--color-gray-500); font-size: 13px; }
     .price-final { font-size: 18px; font-weight: 700; color: var(--color-secondary); }
 
     .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 18px; }
-    .guide-card .ph { height: 100px; display:flex; align-items:center; justify-content:center; font-size:36px; background: var(--color-gray-100); }
+    .guide-card .ph { height: 100px; position: relative; }
 </style>
 </head>
 <body data-page="packages">
@@ -89,7 +90,10 @@
                 const finalPrice = Math.round(p.basePrice * (1 - p.discount / 100) / 1000) * 1000;
                 return `
                     <div class="card package-card">
-                        <div class="ph">${p.emoji}<span class="discount-badge">${p.discount}% OFF</span></div>
+                        <div class="ph photo-tile" style="background-image:url('${photoUrl('pkg-' + p.name)}');">
+                            <span class="discount-badge">${p.discount}% OFF</span>
+                            <span class="tile-emoji-badge">${p.emoji}</span>
+                        </div>
                         <div class="package-body">
                             <strong>${p.name}</strong>
                             <div class="price-row">
@@ -110,7 +114,7 @@
 
             document.getElementById('guideGrid').innerHTML = GUIDES.map(g => `
                 <div class="card guide-card">
-                    <div class="ph">${g.emoji}</div>
+                    <div class="ph photo-tile" style="background-image:url('${photoUrl('guide-' + g.title)}');"><span class="tile-emoji-badge">${g.emoji}</span></div>
                     <div class="package-body"><strong>${g.title}</strong></div>
                 </div>
             `).join('');

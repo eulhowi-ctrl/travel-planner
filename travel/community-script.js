@@ -1,4 +1,4 @@
-// ==================== TRAVOL Community Page ====================
+// ==================== TRAVEL Community Page ====================
 
 const QNA_SEED = [
     { title: '부산 3박4일 예산 얼마나 잡아야 할까요?', author: '여행초보', answers: 5, tags: ['부산', '예산'] },
@@ -44,7 +44,7 @@ function renderQnaList() {
 function renderStories() {
     document.getElementById('storiesGrid').innerHTML = STORIES_SEED.map(s => `
         <div class="card story-card">
-            <div class="ph">${s.emoji}</div>
+            <div class="ph photo-tile" style="background-image:url('${photoUrl('story-' + s.title)}');"><span class="tile-emoji-badge">${s.emoji}</span></div>
             <div class="story-body">
                 <strong>${s.title}</strong>
                 <div class="story-meta">

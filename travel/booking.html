@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>예약 - TRAVOL</title>
+<title>예약 - TRAVEL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -139,7 +139,7 @@
             }
 
             const pointsInput = document.getElementById('pointsInput');
-            const balance = getTravolPoints().balance;
+            const balance = getTravelPoints().balance;
             let pointsUsed = Math.max(0, Math.min(Number(pointsInput.value) || 0, balance, subtotal - discount));
             pointsInput.value = pointsUsed;
 
@@ -216,15 +216,15 @@
                 setLS('bookings', bookings);
 
                 if (pointsUsed > 0) {
-                    const data = getTravolPoints();
+                    const data = getTravelPoints();
                     data.balance -= pointsUsed;
                     data.history.unshift({ desc: '예약 결제 시 포인트 사용', points: -pointsUsed, date: new Date().toISOString() });
-                    setLS('travolPoints', data);
+                    setLS('travelPoints', data);
                 }
                 earnPoints('예약 완료 적립', Math.round(total * 0.03));
 
                 document.getElementById('bookingNumberDisplay').textContent = bookingNumber;
-                const qrData = `TRAVOL 예약확인\n예약번호: ${bookingNumber}\n날짜: ${document.getElementById('bookingDate').value} ${selectedTime}\n인원: 성인 ${adultCount} / 어린이 ${childCount}`;
+                const qrData = `TRAVEL 예약확인\n예약번호: ${bookingNumber}\n날짜: ${document.getElementById('bookingDate').value} ${selectedTime}\n인원: 성인 ${adultCount} / 어린이 ${childCount}`;
                 document.getElementById('bookingQrImg').src = buildQrUrl(qrData, 160);
                 document.getElementById('confirmModal').classList.remove('hidden');
             });

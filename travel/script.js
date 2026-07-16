@@ -1,4 +1,4 @@
-// ==================== TRAVOL Shared Utilities ====================
+// ==================== TRAVEL Shared Utilities ====================
 // Loaded on every page. Provides header/footer rendering (single source of
 // truth so all 11 pages share identical nav), toast, and LocalStorage helpers.
 
@@ -35,16 +35,23 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
-function getTravolPoints() {
-    return getLS('travolPoints', { balance: 0, history: [] });
+function getTravelPoints() {
+    return getLS('travelPoints', { balance: 0, history: [] });
 }
 
 function earnPoints(desc, points) {
-    const data = getTravolPoints();
+    const data = getTravelPoints();
     data.balance += points;
     data.history.unshift({ desc, points, date: new Date().toISOString() });
-    setLS('travolPoints', data);
+    setLS('travelPoints', data);
     return data;
+}
+
+// ==================== Placeholder Photos ====================
+// Real (non-emoji) stock placeholder photos, seeded so the same item always
+// gets the same image. Swap for licensed destination photography later.
+function photoUrl(seed, w = 400, h = 300) {
+    return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
 }
 
 // ==================== Toast ====================
@@ -67,7 +74,7 @@ function renderHeader(activePage) {
     const root = document.getElementById('header-root');
     if (!root) return;
 
-    const points = getTravolPoints();
+    const points = getTravelPoints();
 
     const navHtml = NAV_LINKS.map(link =>
         `<a href="${link.href}" class="${link.page === activePage ? 'active' : ''}">${link.label}</a>`
@@ -76,7 +83,7 @@ function renderHeader(activePage) {
     root.innerHTML = `
         <header class="site-header">
             <div class="container">
-                <a href="index.html" class="brand">TRA<span>VOL</span></a>
+                <a href="index.html" class="brand">TRA<span>VEL</span></a>
                 <nav class="main-nav">${navHtml}</nav>
                 <div class="header-actions">
                     <a href="rewards.html" class="points-pill">✨ ${points.balance.toLocaleString()}P</a>
@@ -107,7 +114,7 @@ function renderFooter() {
             <div class="container">
                 <div class="footer-grid">
                     <div>
-                        <h4>TRAVOL</h4>
+                        <h4>TRAVEL</h4>
                         <p style="font-size:13px;">AI 개인화 여행 계획 + 커뮤니티</p>
                     </div>
                     <div>
@@ -126,7 +133,7 @@ function renderFooter() {
                         <a href="https://cafe.naver.com/firstlove" target="_blank" rel="noopener">네이버 여행 카페 모음</a>
                     </div>
                 </div>
-                <div class="footer-bottom">© 2026 TRAVOL. All rights reserved.</div>
+                <div class="footer-bottom">© 2026 TRAVEL. All rights reserved.</div>
             </div>
         </footer>
     `;

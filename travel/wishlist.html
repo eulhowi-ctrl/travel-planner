@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>위시리스트 - TRAVOL</title>
+<title>위시리스트 - TRAVEL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -19,7 +19,7 @@
     .wishlist-summary .total { font-size: 24px; font-weight: 700; color: var(--color-primary); }
 
     .wish-item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
-    .wish-item-card .ph { height: 120px; display:flex; align-items:center; justify-content:center; font-size:44px; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); }
+    .wish-item-card .ph { height: 120px; position: relative; }
     .wish-item-body { padding: 14px; }
     .wish-item-body .flex-between { margin-bottom: 8px; }
     .remove-item-btn { color: var(--color-gray-500); font-size: 18px; }
@@ -87,7 +87,7 @@
             const grid = document.getElementById('wishItemGrid');
             grid.innerHTML = folder.items.length ? folder.items.map(item => `
                 <div class="card wish-item-card">
-                    <div class="ph">${item.emoji || '📍'}</div>
+                    <div class="ph photo-tile" style="background-image:url('${photoUrl('wish-' + item.id)}');"><span class="tile-emoji-badge">${item.emoji || '📍'}</span></div>
                     <div class="wish-item-body">
                         <div class="flex-between">
                             <strong>${item.name}</strong>

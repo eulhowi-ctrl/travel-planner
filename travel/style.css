@@ -1,4 +1,4 @@
-/* ==================== TRAVOL Design Tokens ==================== */
+/* ==================== TRAVEL Design Tokens ==================== */
 :root {
     --color-primary: #5B63FF;
     --color-primary-dark: #454DE0;
@@ -215,6 +215,17 @@ ul { list-style: none; }
 .badge-secondary { background: rgba(255, 107, 107, 0.12); color: var(--color-secondary); }
 .badge-primary { background: rgba(91, 99, 255, 0.12); color: var(--color-primary); }
 .badge-gold { background: rgba(255, 184, 77, 0.18); color: #B8790F; }
+
+/* ==================== Photo Tiles ==================== */
+.photo-tile {
+    position: relative; background-size: cover; background-position: center;
+}
+.tile-emoji-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(255,255,255,0.85); border-radius: var(--radius-pill);
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; box-shadow: var(--shadow-sm);
+}
 
 /* ==================== Toast ==================== */
 #toast-container {

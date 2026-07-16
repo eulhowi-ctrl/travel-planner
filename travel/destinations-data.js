@@ -1,4 +1,4 @@
-// ==================== TRAVOL Destination Dataset Generator ====================
+// ==================== TRAVEL Destination Dataset Generator ====================
 // Generates ~8-10 destinations per country from real city coordinates.
 // Mirrors the local_setup/generate_destinations.py pattern: seed table -> expand.
 
