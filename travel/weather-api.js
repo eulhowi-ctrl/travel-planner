@@ -2,8 +2,8 @@
 // Set WEATHER_CONFIG.apiKey to switch from demo data to live OpenWeather calls.
 // No code changes needed elsewhere when a real key is added.
 const WEATHER_CONFIG = {
-    apiKey: '', // OpenWeather API key. Empty = demo mode.
-    demoMode: true,
+    apiKey: '08546cefc93369b0afdeb482c28cfd8b', // OpenWeather API key. Empty = demo mode.
+    demoMode: false,
 };
 
 const DEMO_WEATHER = {
