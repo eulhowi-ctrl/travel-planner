@@ -97,8 +97,9 @@
                     <div class="chip-group" id="themeChips" data-filter="theme">
                         <button class="chip" data-value="family">가족</button>
                         <button class="chip" data-value="couple">커플</button>
-                        <button class="chip" data-value="solo">혼행</button>
-                        <button class="chip" data-value="group">그룹</button>
+                        <button class="chip" data-value="solo">1인</button>
+                        <button class="chip" data-value="friends">친구</button>
+                        <button class="chip" data-value="business">출장</button>
                     </div>
                 </div>
                 <div class="filter-group">
@@ -119,9 +120,18 @@
                     </div>
                 </div>
                 <div class="filter-group">
+                    <h4>이동수단</h4>
+                    <div class="chip-group" data-filter="transport">
+                        <button class="chip" data-value="flight">비행기</button>
+                        <button class="chip" data-value="train">기차</button>
+                        <button class="chip" data-value="rental-car">렌터카</button>
+                        <button class="chip" data-value="transit">대중교통</button>
+                        <button class="chip" data-value="ferry">페리</button>
+                    </div>
+                </div>
+                <div class="filter-group">
                     <h4>접근성</h4>
                     <div class="chip-group" data-filter="accessibility">
-                        <button class="chip" data-value="transit">대중교통</button>
                         <button class="chip" data-value="parking">주차</button>
                         <button class="chip" data-value="wheelchair">휠체어</button>
                     </div>
@@ -186,8 +196,9 @@
             <div class="chip-group mb-16" id="profileThemeChips">
                 <button class="chip" data-value="family">가족</button>
                 <button class="chip" data-value="couple">커플</button>
-                <button class="chip" data-value="solo">혼행</button>
-                <button class="chip" data-value="group">그룹</button>
+                <button class="chip" data-value="solo">1인</button>
+                <button class="chip" data-value="friends">친구</button>
+                <button class="chip" data-value="business">출장</button>
             </div>
             <label>선호 활동 (복수 선택)</label>
             <div class="chip-group mb-16" id="profileActivityChips"></div>
@@ -222,7 +233,7 @@
 
         const state = {
             keyword: '', country: '', theme: null, priceMin: 0, priceMax: 500,
-            duration: null, accessibility: null, season: null, activity: null,
+            duration: null, transport: null, accessibility: null, season: null, activity: null,
             sort: 'recommended', view: 'grid', page: 1,
         };
         const PAGE_SIZE = 12;
@@ -235,6 +246,7 @@
             if (state.theme && d.theme !== state.theme) return false;
             if (d.price < state.priceMin || (state.priceMax < 500 && d.price > state.priceMax)) return false;
             if (state.duration && d.duration !== state.duration) return false;
+            if (state.transport && !d.transport.includes(state.transport)) return false;
             if (state.accessibility && !d.accessibility.includes(state.accessibility)) return false;
             if (state.season && d.season !== state.season) return false;
             if (state.activity && !d.tags.includes(state.activity)) return false;
@@ -257,6 +269,7 @@
             if (state.theme) tags.push({ key: 'theme', label: document.querySelector(`[data-filter=theme] [data-value="${state.theme}"]`).textContent });
             if (state.priceMin > 0 || state.priceMax < 500) tags.push({ key: 'price', label: `${state.priceMin}~${state.priceMax >= 500 ? '500+' : state.priceMax}만원` });
             if (state.duration) tags.push({ key: 'duration', label: document.querySelector(`[data-filter=duration] [data-value="${state.duration}"]`).textContent });
+            if (state.transport) tags.push({ key: 'transport', label: document.querySelector(`[data-filter=transport] [data-value="${state.transport}"]`).textContent });
             if (state.accessibility) tags.push({ key: 'accessibility', label: document.querySelector(`[data-filter=accessibility] [data-value="${state.accessibility}"]`).textContent });
             if (state.season) tags.push({ key: 'season', label: document.querySelector(`[data-filter=season] [data-value="${state.season}"]`).textContent });
             if (state.activity) tags.push({ key: 'activity', label: state.activity });
@@ -273,6 +286,7 @@
             if (key === 'theme') { state.theme = null; }
             if (key === 'price') { state.priceMin = 0; state.priceMax = 500; document.getElementById('priceMin').value = 0; document.getElementById('priceMax').value = 500; updatePriceLabels(); }
             if (key === 'duration') { state.duration = null; }
+            if (key === 'transport') { state.transport = null; }
             if (key === 'accessibility') { state.accessibility = null; }
             if (key === 'season') { state.season = null; }
             if (key === 'activity') { state.activity = null; }
@@ -525,6 +539,12 @@
                 showToast('여행 스타일이 저장되었습니다', 'success');
             });
 
+            const urlKeyword = new URLSearchParams(location.search).get('q');
+            if (urlKeyword) {
+                state.keyword = urlKeyword;
+                document.getElementById('filterKeyword').value = urlKeyword;
+            }
+
             renderRecommended();
             renderAll();
 
@@ -559,7 +579,7 @@
 
             document.getElementById('resetFiltersBtn').addEventListener('click', () => {
                 state.keyword=''; state.country=''; state.theme=null; state.priceMin=0; state.priceMax=500;
-                state.duration=null; state.accessibility=null; state.season=null; state.activity=null; state.page=1;
+                state.duration=null; state.transport=null; state.accessibility=null; state.season=null; state.activity=null; state.page=1;
                 document.getElementById('filterKeyword').value = '';
                 document.getElementById('filterCountry').value = '';
                 document.querySelectorAll('.chip.selected').forEach(c => c.classList.remove('selected'));

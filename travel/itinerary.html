@@ -56,7 +56,7 @@
             <div class="flex-between">
                 <div>
                     <h1 id="tripTitle">부산 3박 4일 여행</h1>
-                    <p class="text-muted">2026.08.14 - 2026.08.17 · 2인</p>
+                    <p class="text-muted" id="tripDates">2026.08.14 - 2026.08.17 · 2인</p>
                 </div>
                 <div class="flex gap-12">
                     <button class="btn btn-secondary" id="autoGenerateBtn">✨ 자동 일정 생성</button>
@@ -116,10 +116,18 @@
     <script src="script.js"></script>
     <script src="weather-api.js"></script>
     <script src="qr-generator.js"></script>
+    <script src="destinations-data.js"></script>
     <script>
-        const ITINERARY = {
+        const BUSAN_ITINERARY = {
             title: '부산 3박 4일 여행',
             city: '부산',
+            budgetItems: [
+                { label: '항공/교통', amount: 350000 },
+                { label: '숙박', amount: 420000 },
+                { label: '식사', amount: 280000 },
+                { label: '활동', amount: 150000 },
+                { label: '쇼핑', amount: 100000 },
+            ],
             days: [
                 {
                     day: 1, date: '2026-08-14',
@@ -190,6 +198,61 @@
                 },
             ]
         };
+
+        // Fallback for destinations without a hand-written day-by-day schedule:
+        // spread their tags across a generic slot pattern sized to their duration.
+        const DURATION_DAY_COUNT = { day: 1, '1n2d': 2, '2n3d': 3, '3n+': 4 };
+        const BUDGET_CATEGORY_RATIOS = [
+            ['항공/교통', 0.27], ['숙박', 0.32], ['식사', 0.22], ['활동', 0.12], ['쇼핑', 0.08],
+        ];
+
+        function buildBudgetItems(totalWon) {
+            return BUDGET_CATEGORY_RATIOS.map(([label, ratio]) => ({
+                label, amount: Math.round(totalWon * ratio / 10000) * 10000,
+            }));
+        }
+        const GENERIC_SLOT_PATTERN = [
+            { time: '09:00', type: 'activity' },
+            { time: '12:00', type: 'meal' },
+            { time: '15:00', type: 'activity' },
+            { time: '18:30', type: 'meal' },
+        ];
+
+        function buildGenericItinerary(dest) {
+            const dayCount = DURATION_DAY_COUNT[dest.duration] || 2;
+            const activityLabels = dest.tags.length ? dest.tags : ['대표 명소'];
+            let activityIdx = 0;
+            const days = [];
+            for (let d = 0; d < dayCount; d++) {
+                const items = GENERIC_SLOT_PATTERN.map(slot => {
+                    if (slot.type === 'meal') {
+                        return { time: slot.time, title: '식사 시간', desc: `${dest.name} 현지 맛집에서 여유롭게 식사하세요`, links: [] };
+                    }
+                    const tag = activityLabels[activityIdx % activityLabels.length];
+                    activityIdx++;
+                    return {
+                        time: slot.time, title: `${dest.name} ${tag} 코스`, desc: `${dest.name}에서 ${tag} 테마로 즐기는 일정이에요`,
+                        links: [{ label: '네이버맵', url: `https://map.naver.com/p/search/${encodeURIComponent(dest.name)}` }],
+                    };
+                });
+                days.push({ day: d + 1, date: '', items });
+            }
+            return {
+                title: `${dest.name} ${dayCount}일 여행`, city: dest.baseCity || dest.name, days, dayCount,
+                budgetItems: buildBudgetItems(dest.price * 10000),
+            };
+        }
+
+        function resolveItinerary() {
+            const selectedId = Number(localStorage.getItem('selectedDestinationId'));
+            if (selectedId) {
+                const dest = (typeof DESTINATIONS_FULL !== 'undefined' ? DESTINATIONS_FULL : []).find(d => d.id === selectedId);
+                if (dest && dest.baseCity !== '부산') return buildGenericItinerary(dest);
+            }
+            return BUSAN_ITINERARY;
+        }
+
+        const ITINERARY = resolveItinerary();
 
         const REVIEWS = [
             { id: 1, name: '김민지', rating: 5, categories: { location: 5, service: 5, value: 4, communication: 5 },
@@ -297,7 +360,10 @@
 
             const generated = { title: '자동 생성 일정', city: ITINERARY.city, days };
             setLS('generatedItinerary', generated);
+            ITINERARY.title = generated.title;
             ITINERARY.days = generated.days;
+            document.getElementById('tripTitle').textContent = generated.title;
+            document.getElementById('tripDates').textContent = `총 ${daysNeeded}일 일정 · 2인`;
             renderDayTabs();
             renderSchedule(0);
             showToast(`위시리스트 ${items.length}개 장소로 ${daysNeeded}일 일정을 생성했습니다!`, 'success');
@@ -336,13 +402,7 @@
 
         function renderBudgetAnalysis() {
             const el = document.getElementById('budgetAnalysis');
-            const items = [
-                { label: '항공/교통', amount: 350000 },
-                { label: '숙박', amount: 420000 },
-                { label: '식사', amount: 280000 },
-                { label: '활동', amount: 150000 },
-                { label: '쇼핑', amount: 100000 },
-            ];
+            const items = ITINERARY.budgetItems;
             const total = items.reduce((s, i) => s + i.amount, 0);
             el.innerHTML = items.map(i => `
                 <div class="card budget-item">
@@ -406,6 +466,10 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('tripTitle').textContent = ITINERARY.title;
+            document.getElementById('tripDates').textContent = ITINERARY === BUSAN_ITINERARY
+                ? '2026.08.14 - 2026.08.17 · 2인'
+                : `총 ${ITINERARY.dayCount}일 일정 · 2인`;
             renderWeatherWidget('weatherWidget', ITINERARY.city);
             renderTransportSection();
             renderLocalTips();

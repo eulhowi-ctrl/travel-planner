@@ -40,8 +40,9 @@
             <button class="chip selected" data-theme="all">전체</button>
             <button class="chip" data-theme="family">가족</button>
             <button class="chip" data-theme="couple">커플</button>
-            <button class="chip" data-theme="solo">혼행</button>
-            <button class="chip" data-theme="group">그룹</button>
+            <button class="chip" data-theme="solo">1인</button>
+            <button class="chip" data-theme="friends">친구</button>
+            <button class="chip" data-theme="business">출장</button>
         </div>
 
         <div class="package-grid" id="packageGrid"></div>
@@ -56,12 +57,13 @@
     <script src="script.js"></script>
     <script>
         const PACKAGES = [
-            { name: '부산 커플 여행 패키지', theme: 'couple', emoji: '🌊', basePrice: 380000, discount: 15 },
-            { name: '제주 가족 힐링 패키지', theme: 'family', emoji: '🍊', basePrice: 520000, discount: 20 },
-            { name: '도쿄 혼행 자유여행', theme: 'solo', emoji: '🗼', basePrice: 690000, discount: 10 },
-            { name: '방콕 그룹 미식 투어', theme: 'group', emoji: '🛕', basePrice: 450000, discount: 25 },
-            { name: '파리 로맨틱 커플 패키지', theme: 'couple', emoji: '💕', basePrice: 1650000, discount: 12 },
-            { name: '싱가포르 가족 테마파크', theme: 'family', emoji: '🦁', basePrice: 980000, discount: 18 },
+            { id: 0, name: '부산 커플 여행 패키지', theme: 'couple', emoji: '🌊', basePrice: 380000, discount: 15 },
+            { id: 1, name: '제주 가족 힐링 패키지', theme: 'family', emoji: '🍊', basePrice: 520000, discount: 20 },
+            { id: 2, name: '도쿄 1인 자유여행', theme: 'solo', emoji: '🗼', basePrice: 690000, discount: 10 },
+            { id: 3, name: '방콕 친구와 미식 투어', theme: 'friends', emoji: '🛕', basePrice: 450000, discount: 25 },
+            { id: 4, name: '싱가포르 출장 패키지', theme: 'business', emoji: '💼', basePrice: 720000, discount: 8 },
+            { id: 5, name: '파리 로맨틱 커플 패키지', theme: 'couple', emoji: '💕', basePrice: 1650000, discount: 12 },
+            { id: 6, name: '싱가포르 가족 테마파크', theme: 'family', emoji: '🦁', basePrice: 980000, discount: 18 },
         ];
 
         const GUIDES = [
@@ -100,11 +102,23 @@
                                 <span class="price-original">${p.basePrice.toLocaleString()}원</span>
                                 <span class="price-final">${finalPrice.toLocaleString()}원</span>
                             </div>
-                            <a href="booking.html" class="btn btn-primary btn-small btn-block mt-16">예약하기</a>
+                            <button class="btn btn-primary btn-small btn-block mt-16" data-book="${p.id}">예약하기</button>
                         </div>
                     </div>
                 `;
             }).join('');
+            document.querySelectorAll('[data-book]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const pkg = PACKAGES.find(p => p.id === Number(btn.dataset.book));
+                    const finalPrice = Math.round(pkg.basePrice * (1 - pkg.discount / 100) / 1000) * 1000;
+                    setLS('selectedPackage', {
+                        name: pkg.name,
+                        adultPrice: finalPrice,
+                        childPrice: Math.round(finalPrice / 2 / 1000) * 1000,
+                    });
+                    window.location.href = 'booking.html';
+                });
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {

@@ -31,7 +31,7 @@
     <div class="container">
         <div class="booking-layout">
             <div class="booking-form">
-                <h1 class="mb-24">예약하기 — 해운대 감성 투어</h1>
+                <h1 class="mb-24" id="bookingTitle">예약하기 — 해운대 감성 투어</h1>
 
                 <div class="form-group">
                     <label for="bookingDate">날짜 선택</label>
@@ -50,7 +50,7 @@
 
                 <div class="form-group">
                     <div class="qty-row">
-                        <div><strong>성인</strong><div class="text-muted" style="font-size:12px;">45,000원</div></div>
+                        <div><strong>성인</strong><div class="text-muted" style="font-size:12px;" id="adultPriceLabel">45,000원</div></div>
                         <div class="qty-control">
                             <button data-qty="adult" data-delta="-1">−</button>
                             <span id="adultCount">1</span>
@@ -58,7 +58,7 @@
                         </div>
                     </div>
                     <div class="qty-row">
-                        <div><strong>어린이</strong><div class="text-muted" style="font-size:12px;">22,500원</div></div>
+                        <div><strong>어린이</strong><div class="text-muted" style="font-size:12px;" id="childPriceLabel">22,500원</div></div>
                         <div class="qty-control">
                             <button data-qty="child" data-delta="-1">−</button>
                             <span id="childCount">0</span>
@@ -110,7 +110,12 @@
     <script src="script.js"></script>
     <script src="qr-generator.js"></script>
     <script>
-        const ADULT_PRICE = 45000, CHILD_PRICE = 22500;
+        let ADULT_PRICE = 45000, CHILD_PRICE = 22500;
+        const selectedPackage = getLS('selectedPackage', null);
+        if (selectedPackage) {
+            ADULT_PRICE = selectedPackage.adultPrice;
+            CHILD_PRICE = selectedPackage.childPrice;
+        }
         const COUPONS = {
             'WELCOME5000': { discount: 5000, minAmount: 0 },
             'SAVE50000': { discount: 50000, minAmount: 100000 },
@@ -163,6 +168,11 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            if (selectedPackage) {
+                document.getElementById('bookingTitle').textContent = `예약하기 — ${selectedPackage.name}`;
+                document.getElementById('adultPriceLabel').textContent = ADULT_PRICE.toLocaleString() + '원';
+                document.getElementById('childPriceLabel').textContent = CHILD_PRICE.toLocaleString() + '원';
+            }
             document.getElementById('bookingDate').valueAsDate = new Date();
             updateSummary();
 

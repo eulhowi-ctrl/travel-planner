@@ -78,7 +78,7 @@
             const wrap = document.createElement('div');
             wrap.className = 'rec-cards';
             wrap.innerHTML = names.map(n => `
-                <a class="rec-card" href="search.html">
+                <a class="rec-card" href="search.html?q=${encodeURIComponent(n)}">
                     <div class="ph">${dests[n] || '📍'}</div>
                     <strong>${n}</strong>
                 </a>

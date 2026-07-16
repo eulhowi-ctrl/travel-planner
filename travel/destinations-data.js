@@ -138,10 +138,11 @@ const COUNTRY_SEEDS = [
     ]},
 ];
 
-const THEMES = ['family', 'couple', 'solo', 'group'];
+const THEMES = ['family', 'couple', 'solo', 'friends', 'business'];
 const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 const TAG_POOL = ['자연', '휴양', '역사', '쇼핑', '맛집', '야경', '해변', '액티비티', '사진명소', '문화'];
-const ACCESSIBILITY_POOL = ['transit', 'parking', 'wheelchair'];
+const TRANSPORT_POOL = ['flight', 'train', 'rental-car', 'transit', 'ferry'];
+const ACCESSIBILITY_POOL = ['parking', 'wheelchair'];
 
 // Simple seeded pseudo-random so the dataset is stable across reloads.
 function seededRandom(seed) {
@@ -175,14 +176,16 @@ function generateDestinations() {
                 const price = Math.round((30 + seededRandom(seed + 2) * 250) / 5) * 5;
                 const rating = (4.2 + seededRandom(seed + 3) * 0.8).toFixed(1);
                 const tags = style ? style.focus : [pick(TAG_POOL, seed + 4), pick(TAG_POOL, seed + 5)].filter((v, i, a) => a.indexOf(v) === i);
-                const accessibility = ACCESSIBILITY_POOL.filter(() => seededRandom(seed + id) > 0.4);
+                const transport = TRANSPORT_POOL.filter((_, i) => seededRandom(seed + id + i) > 0.4);
+                const accessibility = ACCESSIBILITY_POOL.filter((_, i) => seededRandom(seed + id + i + 50) > 0.5);
                 list.push({
                     id: id++,
                     name: style ? name + style.suffix : name,
                     baseCity: name,
                     country: country.country, region: country.region,
                     lat, lng, theme, price, duration: pick(['day', '1n2d', '2n3d', '3n+'], seed + 6),
-                    accessibility: accessibility.length ? accessibility : ['transit'],
+                    transport: transport.length ? transport : ['transit'],
+                    accessibility,
                     season, tags: tags.length ? tags : ['여행'],
                     emoji: country.emoji, rating: Number(rating),
                 });
