@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRAVOL - AI 개인화 여행 계획 + 커뮤니티</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+    .hero {
+        padding: 72px 0 96px;
+        background: linear-gradient(160deg, var(--color-light) 0%, #EEF0FF 100%);
+        overflow: hidden;
+    }
+    .hero .container { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center; }
+    .hero-eyebrow {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(91,99,255,0.1); color: var(--color-primary);
+        padding: 6px 14px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700;
+        margin-bottom: 20px;
+    }
+    .hero h1 { font-size: 44px; margin-bottom: 18px; }
+    .hero p.lead { font-size: 17px; color: var(--color-gray-700); margin-bottom: 8px; }
+    .hero-cta { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+    .hero-visual {
+        aspect-ratio: 4/3; border-radius: var(--radius-lg);
+        background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+        display: flex; align-items: center; justify-content: center; font-size: 96px;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .diff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .diff-card { padding: 32px 26px; text-align: left; }
+    .diff-icon { font-size: 36px; margin-bottom: 16px; }
+    .diff-card h3 { font-size: 19px; margin-bottom: 8px; }
+    .diff-card p { font-size: 14px; color: var(--color-gray-500); }
+
+    .flow-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; counter-reset: step; }
+    .flow-step { text-align: center; position: relative; padding: 24px 16px; }
+    .flow-step .step-num {
+        width: 48px; height: 48px; border-radius: 50%; background: var(--color-primary); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px;
+        margin: 0 auto 16px;
+    }
+    .flow-step h4 { font-size: 15px; margin-bottom: 6px; }
+    .flow-step p { font-size: 13px; color: var(--color-gray-500); }
+
+    .testimonial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .testimonial-card { padding: 26px; }
+    .testimonial-stars { color: var(--color-warning); margin-bottom: 12px; letter-spacing: 2px; }
+    .testimonial-quote { font-size: 14px; color: var(--color-gray-700); margin-bottom: 16px; }
+    .testimonial-author { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle {
+        width: 36px; height: 36px; border-radius: 50%; background: var(--color-accent);
+        display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px;
+    }
+
+    .cta-banner {
+        background: var(--color-dark); border-radius: var(--radius-lg); padding: 56px 40px; text-align: center;
+        color: #fff;
+    }
+    .cta-banner h2 { font-size: 30px; margin-bottom: 12px; }
+    .cta-banner p { color: var(--color-gray-300); margin-bottom: 28px; }
+
+    @media (max-width: 900px) {
+        .hero .container { grid-template-columns: 1fr; }
+        .diff-grid, .flow-steps, .testimonial-grid { grid-template-columns: 1fr; }
+        .hero h1 { font-size: 32px; }
+    }
+</style>
+</head>
+<body data-page="home">
+    <div id="header-root"></div>
+
+    <section class="hero">
+        <div class="container">
+            <div>
+                <span class="hero-eyebrow">🤖 AI 개인화 70% + 커뮤니티 30%</span>
+                <h1>당신만의 여행,<br>TRAVOL이 함께 계획합니다</h1>
+                <p class="lead">여행지 추천부터 일정 자동 생성, 예산 관리까지 한 곳에서.</p>
+                <p class="lead">실제 여행자들의 후기와 커뮤니티 정보로 더 확실하게.</p>
+                <div class="hero-cta">
+                    <a href="search.html" class="btn btn-primary btn-large">여행지 둘러보기</a>
+                    <a href="chatbot.html" class="btn btn-secondary btn-large">AI에게 추천받기</a>
+                </div>
+            </div>
+            <div class="hero-visual">🌍</div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title text-center">TRAVOL만의 차별점</h2>
+            <p class="section-subtitle text-center">다른 여행 플래너와 다른 이유</p>
+            <div class="diff-grid">
+                <div class="card diff-card">
+                    <div class="diff-icon">🗺️</div>
+                    <h3>장소별 현지 링크 연결</h3>
+                    <p>일정에 담긴 모든 장소마다 네이버맵, 카페, 블로그 후기 링크를 바로 연결해드려요.</p>
+                </div>
+                <div class="card diff-card">
+                    <div class="diff-icon">🎯</div>
+                    <h3>내 취향 기반 맞춤 추천</h3>
+                    <p>테마, 동반자, 선호 활동을 반영한 개인화 추천으로 나에게 꼭 맞는 여행지를 찾아드려요.</p>
+                </div>
+                <div class="card diff-card">
+                    <div class="diff-icon">💬</div>
+                    <h3>여행자 커뮤니티</h3>
+                    <p>Q&A, 여행기, 여행 버디 매칭까지 — 혼자가 아닌 함께 계획하는 여행.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" style="background:var(--color-white);">
+        <div class="container">
+            <h2 class="section-title text-center">이렇게 시작하세요</h2>
+            <p class="section-subtitle text-center">4단계로 완성하는 나만의 여행</p>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="step-num">1</div>
+                    <h4>여행지 검색</h4>
+                    <p>필터로 원하는 여행지를 찾아보세요</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">2</div>
+                    <h4>위시리스트 저장</h4>
+                    <p>마음에 드는 곳을 폴더별로 정리</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">3</div>
+                    <h4>일정 자동 생성</h4>
+                    <p>일자별 활동을 자동으로 배치</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">4</div>
+                    <h4>예약 & 공유</h4>
+                    <p>예약하고 친구들과 일정을 공유하세요</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title text-center">여행자들의 이야기</h2>
+            <p class="section-subtitle text-center">TRAVOL과 함께한 여행 후기</p>
+            <div class="testimonial-grid">
+                <div class="card testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">"장소마다 연결된 카페 링크 덕분에 정보 찾는 시간이 확 줄었어요."</p>
+                    <div class="testimonial-author">
+                        <div class="avatar-circle">민</div>
+                        <div><strong>김민지</strong><div class="text-muted" style="font-size:12px;">부산 3박4일</div></div>
+                    </div>
+                </div>
+                <div class="card testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">"자동 일정 생성이 생각보다 훨씬 자연스러워서 놀랐어요."</p>
+                    <div class="testimonial-author">
+                        <div class="avatar-circle">준</div>
+                        <div><strong>이준호</strong><div class="text-muted" style="font-size:12px;">제주도 2박3일</div></div>
+                    </div>
+                </div>
+                <div class="card testimonial-card">
+                    <div class="testimonial-stars">★★★★☆</div>
+                    <p class="testimonial-quote">"여행 버디 기능으로 같이 갈 사람을 구해서 든든했습니다."</p>
+                    <div class="testimonial-author">
+                        <div class="avatar-circle">수</div>
+                        <div><strong>박수아</strong><div class="text-muted" style="font-size:12px;">도쿄 4박5일</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="cta-banner">
+                <h2>지금 바로 여행 계획을 시작해보세요</h2>
+                <p>가입 없이, 무료로 바로 이용 가능합니다</p>
+                <a href="search.html" class="btn btn-primary btn-large">여행지 검색하기</a>
+            </div>
+        </div>
+    </section>
+
+    <div id="footer-root"></div>
+    <script src="script.js"></script>
+</body>
+</html>

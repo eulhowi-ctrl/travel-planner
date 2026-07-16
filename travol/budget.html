@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>예산 관리 - TRAVOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+    .budget-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; padding: 40px 0; align-items: start; }
+    .summary-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+    .summary-box { padding: 20px; text-align: center; }
+    .summary-box .num { font-size: 22px; font-weight: 700; }
+    .summary-box .label { font-size: 12px; color: var(--color-gray-500); margin-top: 4px; }
+
+    .category-row { padding: 16px 20px; margin-bottom: 10px; }
+    .category-row .flex-between { margin-bottom: 8px; }
+    .category-bar { height: 6px; border-radius: 3px; background: var(--color-gray-100); overflow: hidden; }
+    .category-bar-fill { height: 100%; background: var(--color-primary); }
+    .category-bar-fill.over { background: var(--color-danger); }
+
+    .item-list { margin-top: 12px; }
+    .budget-item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 13px; border-top: 1px solid var(--color-gray-100); }
+    .remove-budget-item { color: var(--color-gray-500); }
+    .remove-budget-item:hover { color: var(--color-danger); }
+
+    .fx-card { padding: 20px; margin-bottom: 20px; }
+    .fx-result { font-size: 22px; font-weight: 700; color: var(--color-primary); margin: 12px 0 4px; }
+    .fx-meta { font-size: 11px; color: var(--color-gray-500); }
+</style>
+</head>
+<body data-page="budget">
+    <div id="header-root"></div>
+
+    <div class="container">
+        <h1 class="mt-24 mb-16">예산 관리</h1>
+
+        <div class="budget-layout">
+            <main>
+                <div class="summary-strip">
+                    <div class="card summary-box"><div class="num" id="totalPlanned">0원</div><div class="label">예상 총액</div></div>
+                    <div class="card summary-box"><div class="num" id="totalActual">0원</div><div class="label">실제 지출</div></div>
+                    <div class="card summary-box"><div class="num" id="totalDiff">0원</div><div class="label">차이</div></div>
+                </div>
+
+                <div id="categoryList"></div>
+            </main>
+
+            <aside>
+                <div class="card fx-card">
+                    <h3 class="mb-16">실시간 환율 변환</h3>
+                    <label for="fxAmount">금액 (KRW)</label>
+                    <input type="number" id="fxAmount" value="100000">
+                    <label for="fxCurrency" class="mt-16">변환 통화</label>
+                    <select id="fxCurrency">
+                        <option value="USD">USD 미국 달러</option>
+                        <option value="JPY">JPY 일본 엔</option>
+                        <option value="CNY">CNY 중국 위안</option>
+                        <option value="THB">THB 태국 바트</option>
+                        <option value="EUR">EUR 유로</option>
+                    </select>
+                    <div class="fx-result" id="fxResult">-</div>
+                    <div class="fx-meta" id="fxMeta">환율 조회 중...</div>
+                </div>
+
+                <div class="card" style="padding:20px;">
+                    <h3 class="mb-16">항목 추가</h3>
+                    <label for="itemCategory">카테고리</label>
+                    <select id="itemCategory">
+                        <option value="항공/교통">항공/교통</option>
+                        <option value="숙박">숙박</option>
+                        <option value="식사">식사</option>
+                        <option value="활동">활동</option>
+                        <option value="현지교통">현지교통</option>
+                        <option value="쇼핑">쇼핑</option>
+                        <option value="기타">기타</option>
+                    </select>
+                    <label for="itemDesc" class="mt-16">내용</label>
+                    <input type="text" id="itemDesc" placeholder="예: 왕복 항공권">
+                    <label for="itemPlanned" class="mt-16">예상 금액 (원)</label>
+                    <input type="number" id="itemPlanned" value="0">
+                    <label for="itemActual" class="mt-16">실제 지출 (원, 선택)</label>
+                    <input type="number" id="itemActual" value="0">
+                    <button class="btn btn-primary btn-block mt-16" id="addItemBtn">추가하기</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <div id="footer-root"></div>
+    <script src="script.js"></script>
+    <script src="exchange-api.js"></script>
+    <script>
+        const CATEGORIES = ['항공/교통', '숙박', '식사', '활동', '현지교통', '쇼핑', '기타'];
+
+        function getBudgetItems() { return getLS('budgetItems', []); }
+
+        function renderSummary() {
+            const items = getBudgetItems();
+            const planned = items.reduce((s, i) => s + i.planned, 0);
+            const actual = items.reduce((s, i) => s + i.actual, 0);
+            const diff = actual - planned;
+            document.getElementById('totalPlanned').textContent = planned.toLocaleString() + '원';
+            document.getElementById('totalActual').textContent = actual.toLocaleString() + '원';
+            const diffEl = document.getElementById('totalDiff');
+            diffEl.textContent = (diff > 0 ? '+' : '') + diff.toLocaleString() + '원';
+            diffEl.style.color = diff > 0 ? 'var(--color-danger)' : 'var(--color-success)';
+        }
+
+        function renderCategories() {
+            const items = getBudgetItems();
+            const el = document.getElementById('categoryList');
+            el.innerHTML = CATEGORIES.map(cat => {
+                const catItems = items.filter(i => i.category === cat);
+                if (!catItems.length) return '';
+                const planned = catItems.reduce((s, i) => s + i.planned, 0);
+                const actual = catItems.reduce((s, i) => s + i.actual, 0);
+                const pct = planned > 0 ? Math.min(100, Math.round((actual / planned) * 100)) : (actual > 0 ? 100 : 0);
+                const over = actual > planned && planned > 0;
+                return `
+                    <div class="card category-row">
+                        <div class="flex-between">
+                            <strong>${cat}</strong>
+                            <span class="${over ? 'text-secondary' : 'text-muted'}" style="font-size:13px;">${actual.toLocaleString()} / ${planned.toLocaleString()}원</span>
+                        </div>
+                        <div class="category-bar"><div class="category-bar-fill ${over ? 'over' : ''}" style="width:${pct}%;"></div></div>
+                        <div class="item-list">
+                            ${catItems.map(i => `
+                                <div class="budget-item-row">
+                                    <span>${escapeHtml(i.desc) || '(내용 없음)'}</span>
+                                    <span class="flex gap-8">
+                                        <span>${i.actual.toLocaleString()}원</span>
+                                        <button class="remove-budget-item" data-remove="${i.id}">&times;</button>
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-muted">등록된 예산 항목이 없습니다. 오른쪽에서 추가해보세요.</p>';
+
+            el.querySelectorAll('[data-remove]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const items = getBudgetItems().filter(i => i.id !== Number(btn.dataset.remove));
+                    setLS('budgetItems', items);
+                    renderAll();
+                    showToast('항목을 삭제했습니다');
+                });
+            });
+        }
+
+        function renderAll() { renderSummary(); renderCategories(); }
+
+        let currentRates = null;
+
+        function updateFxResult() {
+            if (!currentRates) return;
+            const amount = Number(document.getElementById('fxAmount').value) || 0;
+            const currency = document.getElementById('fxCurrency').value;
+            const converted = convertFromKRW(amount, currency, currentRates.rates);
+            document.getElementById('fxResult').textContent = converted !== null ? converted.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + currency : '-';
+            document.getElementById('fxMeta').textContent = currentRates.live
+                ? `실시간 환율 (${new Date(currentRates.timestamp).toLocaleString('ko-KR')})`
+                : `⚠️ 오프라인 - 캐시된 환율 사용${currentRates.timestamp ? ' (' + new Date(currentRates.timestamp).toLocaleString('ko-KR') + ')' : ''}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderAll();
+
+            document.getElementById('addItemBtn').addEventListener('click', () => {
+                const category = document.getElementById('itemCategory').value;
+                const desc = document.getElementById('itemDesc').value.trim();
+                const planned = Number(document.getElementById('itemPlanned').value) || 0;
+                const actual = Number(document.getElementById('itemActual').value) || 0;
+
+                const items = getBudgetItems();
+                items.push({ id: Date.now(), category, desc, planned, actual });
+                setLS('budgetItems', items);
+
+                document.getElementById('itemDesc').value = '';
+                document.getElementById('itemPlanned').value = 0;
+                document.getElementById('itemActual').value = 0;
+                renderAll();
+                showToast('예산 항목을 추가했습니다', 'success');
+            });
+
+            document.getElementById('fxAmount').addEventListener('input', updateFxResult);
+            document.getElementById('fxCurrency').addEventListener('change', updateFxResult);
+
+            currentRates = await getExchangeRates();
+            updateFxResult();
+        });
+    </script>
+</body>
+</html>

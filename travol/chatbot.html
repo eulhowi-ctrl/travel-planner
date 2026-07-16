@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 챗봇 - TRAVOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+    .chat-wrap { max-width: 640px; margin: 0 auto; padding: 32px 0; }
+    .chat-window { background: var(--color-white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); height: 520px; display: flex; flex-direction: column; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+    .msg { max-width: 78%; padding: 12px 16px; border-radius: var(--radius-md); font-size: 14px; line-height: 1.5; }
+    .msg.bot { background: var(--color-gray-100); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .msg.user { background: var(--color-primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg.typing { display: flex; gap: 4px; align-items: center; }
+    .msg.typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--color-gray-500); animation: blink 1.2s infinite; }
+    .msg.typing span:nth-child(2) { animation-delay: 0.2s; } .msg.typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+
+    .rec-cards { display: flex; gap: 10px; overflow-x: auto; margin-top: 8px; }
+    .rec-card { flex-shrink: 0; width: 140px; background: var(--color-white); border-radius: var(--radius-sm); padding: 10px; box-shadow: var(--shadow-sm); font-size: 12px; }
+    .rec-card .ph { font-size: 28px; text-align: center; margin-bottom: 6px; }
+
+    .chat-input-row { display: flex; gap: 10px; padding: 16px; border-top: 1px solid var(--color-gray-100); }
+    .quick-replies { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 12px; }
+</style>
+</head>
+<body data-page="chatbot">
+    <div id="header-root"></div>
+
+    <div class="container chat-wrap">
+        <h1 class="mb-16">TRAVOL AI 챗봇</h1>
+        <div class="chat-window">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="quick-replies" id="quickReplies"></div>
+            <div class="chat-input-row">
+                <input type="text" id="chatInput" placeholder="여행에 대해 무엇이든 물어보세요">
+                <button class="btn btn-primary" id="sendBtn">전송</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-root"></div>
+    <script src="script.js"></script>
+    <script>
+        // Rule-based intent engine (8 intents). Swap for a backend LLM call when available.
+        const INTENTS = [
+            { name: 'greeting', keywords: ['안녕', '하이', 'ㅎㅇ'], reply: '안녕하세요! TRAVOL 여행 도우미입니다. 여행지 추천, 예산, 날씨, 일정에 대해 물어보세요 😊' },
+            { name: 'family', keywords: ['가족', '아이', '부모님'], reply: '가족 여행이라면 제주도나 싱가포르를 추천해요! 접근성과 안전한 활동 위주로 골라봤어요.', recommend: ['제주도', '싱가포르'] },
+            { name: 'couple', keywords: ['커플', '연인', '신혼'], reply: '커플 여행엔 파리나 교토가 인기가 많아요. 로맨틱한 야경 명소도 함께 안내해드릴게요.', recommend: ['파리', '교토'] },
+            { name: 'solo', keywords: ['혼자', '혼행', '나홀로'], reply: '혼행이라면 도쿄나 런던처럼 대중교통이 편한 도시가 좋아요.', recommend: ['도쿄', '런던'] },
+            { name: 'budget', keywords: ['예산', '가격', '얼마', '저렴'], reply: '예산 관리가 필요하시면 budget.html에서 카테고리별로 관리하실 수 있어요. 환율도 실시간으로 반영돼요!', link: 'budget.html' },
+            { name: 'weather', keywords: ['날씨', '기온', '비'], reply: '일정 페이지에서 여행지별 실시간 날씨와 활동 추천을 확인하실 수 있어요.', link: 'itinerary.html' },
+            { name: 'itinerary', keywords: ['일정', '계획', '코스'], reply: '위시리스트에 담은 장소들로 일정을 자동 생성해드릴 수 있어요!', link: 'wishlist.html' },
+            { name: 'points', keywords: ['포인트', '적립', '쿠폰'], reply: '예약 시 3% 포인트가 적립되고, 쿠폰이나 바우처로 교환하실 수 있어요.', link: 'rewards.html' },
+        ];
+
+        function matchIntent(text) {
+            const lower = text.toLowerCase();
+            for (const intent of INTENTS) {
+                if (intent.keywords.some(k => lower.includes(k))) return intent;
+            }
+            return null;
+        }
+
+        function addMessage(text, sender) {
+            const el = document.createElement('div');
+            el.className = `msg ${sender}`;
+            el.textContent = text;
+            document.getElementById('chatMessages').appendChild(el);
+            scrollToBottom();
+        }
+
+        function addRecommendCards(names) {
+            const dests = { '제주도': '🍊', '싱가포르': '🦁', '파리': '🗼', '교토': '⛩️', '도쿄': '🗾', '런던': '🎡' };
+            const wrap = document.createElement('div');
+            wrap.className = 'rec-cards';
+            wrap.innerHTML = names.map(n => `
+                <a class="rec-card" href="search.html">
+                    <div class="ph">${dests[n] || '📍'}</div>
+                    <strong>${n}</strong>
+                </a>
+            `).join('');
+            document.getElementById('chatMessages').appendChild(wrap);
+            scrollToBottom();
+        }
+
+        function addLinkButton(label, url) {
+            const wrap = document.createElement('a');
+            wrap.href = url;
+            wrap.className = 'btn btn-secondary btn-small';
+            wrap.style.alignSelf = 'flex-start';
+            wrap.textContent = label + ' 바로가기 →';
+            document.getElementById('chatMessages').appendChild(wrap);
+            scrollToBottom();
+        }
+
+        function showTyping() {
+            const el = document.createElement('div');
+            el.className = 'msg bot typing';
+            el.id = 'typingIndicator';
+            el.innerHTML = '<span></span><span></span><span></span>';
+            document.getElementById('chatMessages').appendChild(el);
+            scrollToBottom();
+        }
+
+        function removeTyping() {
+            document.getElementById('typingIndicator')?.remove();
+        }
+
+        function scrollToBottom() {
+            const el = document.getElementById('chatMessages');
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function handleUserMessage(text) {
+            if (!text.trim()) return;
+            addMessage(text, 'user');
+            document.getElementById('chatInput').value = '';
+            showTyping();
+
+            setTimeout(() => {
+                removeTyping();
+                const intent = matchIntent(text);
+                if (intent) {
+                    addMessage(intent.reply, 'bot');
+                    if (intent.recommend) addRecommendCards(intent.recommend);
+                    if (intent.link) addLinkButton(intent.name === 'budget' ? '예산 관리' : intent.name === 'weather' ? '일정 & 날씨' : intent.name === 'itinerary' ? '위시리스트' : '포인트', intent.link);
+                } else {
+                    addMessage('아직 이해하지 못했어요. "가족 여행 추천해줘", "예산 관리 어떻게 해?" 처럼 물어봐 주세요!', 'bot');
+                }
+            }, 700 + Math.random() * 500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            addMessage('안녕하세요! TRAVOL AI 여행 도우미입니다. 무엇을 도와드릴까요?', 'bot');
+
+            const quick = ['가족 여행 추천해줘', '예산 관리 어떻게 해?', '날씨 알려줘', '포인트 어떻게 써?'];
+            document.getElementById('quickReplies').innerHTML = quick.map(q => `<button class="chip">${q}</button>`).join('');
+            document.querySelectorAll('#quickReplies .chip').forEach(chip => {
+                chip.addEventListener('click', () => handleUserMessage(chip.textContent));
+            });
+
+            document.getElementById('sendBtn').addEventListener('click', () => handleUserMessage(document.getElementById('chatInput').value));
+            document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleUserMessage(e.target.value); });
+        });
+    </script>
+</body>
+</html>

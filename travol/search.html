@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여행지 검색 - TRAVOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+    .search-layout { display: grid; grid-template-columns: 280px 1fr; gap: 32px; padding: 40px 0; align-items: start; }
+    .filter-panel { position: sticky; top: calc(var(--header-height) + 24px); background: var(--color-white); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); }
+    .filter-group { margin-bottom: 24px; }
+    .filter-group h4 { font-size: 14px; margin-bottom: 12px; }
+    .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+        padding: 6px 12px; border-radius: var(--radius-pill); border: 1.5px solid var(--color-gray-300);
+        font-size: 12px; color: var(--color-gray-700); transition: all 0.15s ease;
+    }
+    .chip.selected { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .price-range-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--color-gray-500); margin-top: 6px; }
+    .range-slider-wrap { position: relative; height: 32px; }
+    .range-slider-wrap input[type=range] {
+        position: absolute; width: 100%; top: 10px; pointer-events: none; -webkit-appearance: none; background: none;
+    }
+    .range-slider-wrap input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none; pointer-events: auto; width: 16px; height: 16px; border-radius: 50%;
+        background: var(--color-primary); cursor: pointer; box-shadow: var(--shadow-sm);
+    }
+    .active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; min-height: 28px; }
+    .filter-tag {
+        display: flex; align-items: center; gap: 6px; padding: 6px 10px 6px 12px;
+        background: rgba(91,99,255,0.1); color: var(--color-primary); border-radius: var(--radius-pill); font-size: 12px; font-weight: 600;
+    }
+    .filter-tag button { color: var(--color-primary); font-size: 14px; }
+
+    .results-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .view-toggle { display: flex; gap: 4px; background: var(--color-gray-100); padding: 4px; border-radius: var(--radius-pill); }
+    .view-toggle button { padding: 6px 14px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 600; color: var(--color-gray-700); }
+    .view-toggle button.active { background: var(--color-white); box-shadow: var(--shadow-sm); color: var(--color-primary); }
+
+    .dest-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+    .dest-card-img { height: 160px; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); display: flex; align-items: center; justify-content: center; font-size: 48px; }
+    .dest-card-body { padding: 16px; }
+    .dest-card-body h3 { font-size: 16px; margin-bottom: 4px; }
+    .dest-card-meta { font-size: 12px; color: var(--color-gray-500); margin-bottom: 10px; }
+    .dest-card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .dest-card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .dest-price { font-weight: 700; color: var(--color-primary); font-size: 15px; }
+    .wish-btn { font-size: 20px; color: var(--color-gray-300); }
+    .wish-btn.active { color: var(--color-secondary); }
+
+    #mapView { height: 560px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+    #mapView.hidden { display: none; }
+
+    .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 40px; }
+    .pagination button { width: 36px; height: 36px; border-radius: 50%; font-size: 13px; font-weight: 600; color: var(--color-gray-700); }
+    .pagination button.active { background: var(--color-primary); color: #fff; }
+
+    .dest-modal-img { height: 220px; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 64px; margin-bottom: 16px; }
+    .link-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+    @media (max-width: 900px) {
+        .search-layout { grid-template-columns: 1fr; }
+        .filter-panel { position: static; }
+    }
+</style>
+</head>
+<body data-page="search">
+    <div id="header-root"></div>
+
+    <div class="container">
+        <div class="search-layout">
+            <aside class="filter-panel">
+                <h3 class="mb-16">필터</h3>
+                <div class="filter-group">
+                    <h4>검색어</h4>
+                    <input type="text" id="filterKeyword" placeholder="여행지, 국가 검색">
+                </div>
+                <div class="filter-group">
+                    <h4>국가</h4>
+                    <select id="filterCountry">
+                        <option value="">전체 국가</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <h4>테마</h4>
+                    <div class="chip-group" id="themeChips" data-filter="theme">
+                        <button class="chip" data-value="family">가족</button>
+                        <button class="chip" data-value="couple">커플</button>
+                        <button class="chip" data-value="solo">혼행</button>
+                        <button class="chip" data-value="group">그룹</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <h4>가격대 (만원)</h4>
+                    <div class="range-slider-wrap">
+                        <input type="range" id="priceMin" min="0" max="500" value="0" step="10">
+                        <input type="range" id="priceMax" min="0" max="500" value="500" step="10">
+                    </div>
+                    <div class="price-range-labels"><span id="priceMinLabel">0만원</span><span id="priceMaxLabel">500만원+</span></div>
+                </div>
+                <div class="filter-group">
+                    <h4>여행 기간</h4>
+                    <div class="chip-group" data-filter="duration">
+                        <button class="chip" data-value="day">당일</button>
+                        <button class="chip" data-value="1n2d">1박2일</button>
+                        <button class="chip" data-value="2n3d">2박3일</button>
+                        <button class="chip" data-value="3n+">3박+</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <h4>접근성</h4>
+                    <div class="chip-group" data-filter="accessibility">
+                        <button class="chip" data-value="transit">대중교통</button>
+                        <button class="chip" data-value="parking">주차</button>
+                        <button class="chip" data-value="wheelchair">휠체어</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <h4>계절</h4>
+                    <div class="chip-group" data-filter="season">
+                        <button class="chip" data-value="spring">봄</button>
+                        <button class="chip" data-value="summer">여름</button>
+                        <button class="chip" data-value="autumn">가을</button>
+                        <button class="chip" data-value="winter">겨울</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <h4>활동</h4>
+                    <div class="chip-group" id="activityChips" data-filter="activity"></div>
+                </div>
+                <button class="btn btn-ghost btn-small btn-block" id="resetFiltersBtn">필터 초기화</button>
+            </aside>
+
+            <main>
+                <div id="recommendedSection"></div>
+
+                <div class="active-filters" id="activeFilters"></div>
+
+                <div class="results-toolbar">
+                    <div>
+                        <strong id="resultCount">0</strong>개의 여행지
+                    </div>
+                    <div class="flex gap-12">
+                        <select id="sortSelect">
+                            <option value="recommended">추천순</option>
+                            <option value="priceAsc">가격 낮은순</option>
+                            <option value="priceDesc">가격 높은순</option>
+                        </select>
+                        <div class="view-toggle">
+                            <button class="active" data-view="grid">그리드</button>
+                            <button data-view="map">지도</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dest-grid" id="destGrid"></div>
+                <div id="mapView" class="hidden"></div>
+                <div class="pagination" id="pagination"></div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="destModal">
+        <div class="modal-box">
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="profileModal">
+        <div class="modal-box">
+            <button class="modal-close" id="closeProfileModalBtn">&times;</button>
+            <h3 class="mb-16">내 여행 스타일 설정</h3>
+            <label>선호 테마</label>
+            <div class="chip-group mb-16" id="profileThemeChips">
+                <button class="chip" data-value="family">가족</button>
+                <button class="chip" data-value="couple">커플</button>
+                <button class="chip" data-value="solo">혼행</button>
+                <button class="chip" data-value="group">그룹</button>
+            </div>
+            <label>선호 활동 (복수 선택)</label>
+            <div class="chip-group mb-16" id="profileActivityChips"></div>
+            <button class="btn btn-primary btn-block" id="saveProfileBtn">저장하고 추천받기</button>
+        </div>
+    </div>
+
+    <div id="footer-root"></div>
+    <script src="script.js"></script>
+    <script src="destinations-data.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const DESTINATIONS = DESTINATIONS_FULL;
+
+        const NAVER_CAFES = {
+            '부산': 'https://cafe.naver.com/firstlove',
+            '제주도': 'https://cafe.naver.com/jejulovein',
+            '도쿄': 'https://cafe.naver.com/tokyostyle',
+        };
+
+        const state = {
+            keyword: '', country: '', theme: null, priceMin: 0, priceMax: 500,
+            duration: null, accessibility: null, season: null, activity: null,
+            sort: 'recommended', view: 'grid', page: 1,
+        };
+        const PAGE_SIZE = 12;
+        let leafletMap = null;
+        let mapMarkers = [];
+
+        function matchesFilters(d) {
+            if (state.keyword && !(d.name.includes(state.keyword) || d.country.includes(state.keyword))) return false;
+            if (state.country && d.country !== state.country) return false;
+            if (state.theme && d.theme !== state.theme) return false;
+            if (d.price < state.priceMin || (state.priceMax < 500 && d.price > state.priceMax)) return false;
+            if (state.duration && d.duration !== state.duration) return false;
+            if (state.accessibility && !d.accessibility.includes(state.accessibility)) return false;
+            if (state.season && d.season !== state.season) return false;
+            if (state.activity && !d.tags.includes(state.activity)) return false;
+            return true;
+        }
+
+        function getFiltered() {
+            let list = DESTINATIONS.filter(matchesFilters);
+            if (state.sort === 'priceAsc') list.sort((a,b) => a.price - b.price);
+            if (state.sort === 'priceDesc') list.sort((a,b) => b.price - a.price);
+            if (state.sort === 'recommended') list.sort((a,b) => b.rating - a.rating);
+            return list;
+        }
+
+        function renderActiveFilters() {
+            const el = document.getElementById('activeFilters');
+            const tags = [];
+            if (state.keyword) tags.push({ key: 'keyword', label: `"${escapeHtml(state.keyword)}"` });
+            if (state.country) tags.push({ key: 'country', label: state.country });
+            if (state.theme) tags.push({ key: 'theme', label: document.querySelector(`[data-filter=theme] [data-value="${state.theme}"]`).textContent });
+            if (state.priceMin > 0 || state.priceMax < 500) tags.push({ key: 'price', label: `${state.priceMin}~${state.priceMax >= 500 ? '500+' : state.priceMax}만원` });
+            if (state.duration) tags.push({ key: 'duration', label: document.querySelector(`[data-filter=duration] [data-value="${state.duration}"]`).textContent });
+            if (state.accessibility) tags.push({ key: 'accessibility', label: document.querySelector(`[data-filter=accessibility] [data-value="${state.accessibility}"]`).textContent });
+            if (state.season) tags.push({ key: 'season', label: document.querySelector(`[data-filter=season] [data-value="${state.season}"]`).textContent });
+            if (state.activity) tags.push({ key: 'activity', label: state.activity });
+
+            el.innerHTML = tags.map(t => `<span class="filter-tag">${t.label}<button data-clear="${t.key}">&times;</button></span>`).join('');
+            el.querySelectorAll('[data-clear]').forEach(btn => {
+                btn.addEventListener('click', () => clearFilter(btn.dataset.clear));
+            });
+        }
+
+        function clearFilter(key) {
+            if (key === 'keyword') { state.keyword = ''; document.getElementById('filterKeyword').value = ''; }
+            if (key === 'country') { state.country = ''; document.getElementById('filterCountry').value = ''; }
+            if (key === 'theme') { state.theme = null; }
+            if (key === 'price') { state.priceMin = 0; state.priceMax = 500; document.getElementById('priceMin').value = 0; document.getElementById('priceMax').value = 500; updatePriceLabels(); }
+            if (key === 'duration') { state.duration = null; }
+            if (key === 'accessibility') { state.accessibility = null; }
+            if (key === 'season') { state.season = null; }
+            if (key === 'activity') { state.activity = null; }
+            document.querySelectorAll('.chip.selected').forEach(chip => {
+                const group = chip.closest('[data-filter]').dataset.filter;
+                if (group === key) chip.classList.remove('selected');
+            });
+            state.page = 1;
+            renderAll();
+        }
+
+        function updatePriceLabels() {
+            document.getElementById('priceMinLabel').textContent = state.priceMin + '만원';
+            document.getElementById('priceMaxLabel').textContent = (state.priceMax >= 500 ? '500만원+' : state.priceMax + '만원');
+        }
+
+        function destCard(d) {
+            const wishlist = getLS('wishlist', { folders: [{ name: '기본', items: [] }] });
+            const isWished = wishlist.folders.some(f => f.items.some(i => i.id === d.id));
+            return `
+                <div class="card">
+                    <div class="dest-card-img">${d.emoji}</div>
+                    <div class="dest-card-body">
+                        <div class="flex-between">
+                            <h3>${d.name}</h3>
+                            <button class="wish-btn ${isWished ? 'active' : ''}" data-wish="${d.id}">${isWished ? '♥' : '♡'}</button>
+                        </div>
+                        <div class="dest-card-meta">${d.country} · ★ ${d.rating}</div>
+                        <div class="dest-card-tags">${d.tags.map(t => `<span class="badge badge-primary">${t}</span>`).join('')}</div>
+                        <div class="dest-card-footer">
+                            <span class="dest-price">${d.price}만원~</span>
+                            <button class="btn btn-secondary btn-small" data-detail="${d.id}">자세히 보기</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGrid() {
+            const filtered = getFiltered();
+            document.getElementById('resultCount').textContent = filtered.length;
+            const start = (state.page - 1) * PAGE_SIZE;
+            const pageItems = filtered.slice(start, start + PAGE_SIZE);
+            const grid = document.getElementById('destGrid');
+            grid.innerHTML = pageItems.length ? pageItems.map(destCard).join('') : `<p class="text-muted">조건에 맞는 여행지가 없습니다.</p>`;
+
+            grid.querySelectorAll('[data-wish]').forEach(btn => btn.addEventListener('click', () => toggleWish(Number(btn.dataset.wish))));
+            grid.querySelectorAll('[data-detail]').forEach(btn => btn.addEventListener('click', () => openModal(Number(btn.dataset.detail))));
+
+            renderPagination(filtered.length);
+            if (state.view === 'map') renderMapMarkers(filtered);
+        }
+
+        function initMap() {
+            if (leafletMap) return;
+            leafletMap = L.map('mapView').setView([20, 20], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 18,
+            }).addTo(leafletMap);
+        }
+
+        function renderMapMarkers(filtered) {
+            initMap();
+            mapMarkers.forEach(m => leafletMap.removeLayer(m));
+            mapMarkers = [];
+
+            const capped = filtered.slice(0, 200);
+            capped.forEach(d => {
+                const marker = L.marker([d.lat, d.lng]).addTo(leafletMap);
+                const popupHtml = `
+                    <div style="font-family:'Inter',sans-serif; min-width:160px;">
+                        <strong>${d.emoji} ${d.name}</strong>
+                        <div style="font-size:12px; color:#8A8DA8; margin:4px 0;">${d.country} · ★ ${d.rating}</div>
+                        <div style="font-weight:700; color:#5B63FF; margin-bottom:8px;">${d.price}만원~</div>
+                        <button data-map-detail="${d.id}" style="background:#5B63FF; color:#fff; border:none; padding:6px 12px; border-radius:999px; font-size:12px; cursor:pointer;">자세히 보기</button>
+                    </div>
+                `;
+                marker.bindPopup(popupHtml);
+                marker.on('popupopen', () => {
+                    document.querySelector(`[data-map-detail="${d.id}"]`)?.addEventListener('click', () => openModal(d.id));
+                });
+                mapMarkers.push(marker);
+            });
+
+            if (capped.length) {
+                const bounds = L.latLngBounds(capped.map(d => [d.lat, d.lng]));
+                leafletMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 8 });
+            }
+        }
+
+        function renderPagination(total) {
+            const pages = Math.ceil(total / PAGE_SIZE) || 1;
+            const el = document.getElementById('pagination');
+            let html = '';
+            for (let i = 1; i <= pages; i++) {
+                html += `<button class="${i === state.page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+            el.innerHTML = html;
+            el.querySelectorAll('[data-page]').forEach(btn => btn.addEventListener('click', () => { state.page = Number(btn.dataset.page); renderGrid(); window.scrollTo({top: 0, behavior:'smooth'}); }));
+        }
+
+        function toggleWish(id) {
+            const dest = DESTINATIONS.find(d => d.id === id);
+            const wishlist = getLS('wishlist', { folders: [{ name: '기본', items: [] }] });
+            const folder = wishlist.folders[0];
+            const idx = folder.items.findIndex(i => i.id === id);
+            if (idx >= 0) {
+                folder.items.splice(idx, 1);
+                showToast(`${dest.name}을(를) 위시리스트에서 제거했습니다`);
+            } else {
+                folder.items.push({ id: dest.id, name: dest.name, price: dest.price, emoji: dest.emoji });
+                showToast(`${dest.name}을(를) 위시리스트에 추가했습니다`, 'success');
+            }
+            setLS('wishlist', wishlist);
+            renderGrid();
+        }
+
+        function openModal(id) {
+            const d = DESTINATIONS.find(x => x.id === id);
+            document.getElementById('modalContent').innerHTML = `
+                <div class="dest-modal-img">${d.emoji}</div>
+                <h2>${d.name}</h2>
+                <p class="text-muted mb-16">${d.country} · ★ ${d.rating} · ${d.price}만원~</p>
+                <div class="dest-card-tags mb-16">${d.tags.map(t => `<span class="badge badge-primary">${t}</span>`).join('')}</div>
+                <div class="flex gap-12">
+                    <button class="btn btn-primary" id="modalWishBtn">위시리스트에 추가</button>
+                    <button class="btn btn-secondary" id="modalItineraryBtn">일정에 담기</button>
+                </div>
+                <div class="link-row">
+                    ${NAVER_CAFES[d.name] ? `<a href="${NAVER_CAFES[d.name]}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">📎 네이버 여행 카페</a>` : ''}
+                    <a href="https://map.naver.com/p/search/${encodeURIComponent(d.name)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">🗺️ 네이버맵</a>
+                </div>
+            `;
+            document.getElementById('modalWishBtn').addEventListener('click', () => { toggleWish(id); closeModal(); });
+            document.getElementById('modalItineraryBtn').addEventListener('click', () => {
+                localStorage.setItem('selectedDestinationId', String(id));
+                window.location.href = 'itinerary.html';
+            });
+            document.getElementById('destModal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('destModal').classList.add('hidden'); }
+
+        function renderRecommended() {
+            const profile = getLS('userProfile', null);
+            const el = document.getElementById('recommendedSection');
+            if (!profile) {
+                el.innerHTML = `
+                    <div class="card flex-between mb-32" style="padding:20px 24px;">
+                        <div>
+                            <strong>✨ 나만의 맞춤 추천 받아보기</strong>
+                            <p class="text-muted" style="font-size:13px; margin-top:4px;">여행 스타일을 설정하면 취향에 맞는 여행지를 추천해드려요</p>
+                        </div>
+                        <button class="btn btn-primary btn-small" id="openProfileBtn">스타일 설정하기</button>
+                    </div>
+                `;
+                document.getElementById('openProfileBtn').addEventListener('click', openProfileModal);
+                return;
+            }
+            const scored = DESTINATIONS.map(d => {
+                let score = d.theme === profile.theme ? 2 : 0;
+                score += d.tags.filter(t => profile.activities.includes(t)).length;
+                return { d, score };
+            }).filter(x => x.score > 0).sort((a, b) => b.score - a.score);
+            const matches = scored.slice(0, 3).map(x => x.d);
+            if (!matches.length) { el.innerHTML = ''; return; }
+            el.innerHTML = `
+                <div class="flex-between mb-16">
+                    <h3>✨ 내 프로필 기반 추천</h3>
+                    <button class="btn btn-ghost btn-small" id="editProfileBtn">스타일 수정</button>
+                </div>
+                <div class="dest-grid mb-32">${matches.map(destCard).join('')}</div>
+            `;
+            el.querySelectorAll('[data-wish]').forEach(btn => btn.addEventListener('click', () => toggleWish(Number(btn.dataset.wish))));
+            el.querySelectorAll('[data-detail]').forEach(btn => btn.addEventListener('click', () => openModal(Number(btn.dataset.detail))));
+            document.getElementById('editProfileBtn').addEventListener('click', openProfileModal);
+        }
+
+        function openProfileModal() {
+            const profile = getLS('userProfile', { theme: null, activities: [] });
+            document.querySelectorAll('#profileThemeChips .chip').forEach(c => c.classList.toggle('selected', c.dataset.value === profile.theme));
+            document.querySelectorAll('#profileActivityChips .chip').forEach(c => c.classList.toggle('selected', profile.activities.includes(c.dataset.value)));
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+        function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
+
+        function renderAll() {
+            renderActiveFilters();
+            renderGrid();
+        }
+
+        function populateCountryFilter() {
+            const countries = [...new Set(DESTINATIONS.map(d => d.country))].sort();
+            const select = document.getElementById('filterCountry');
+            select.innerHTML = '<option value="">전체 국가</option>' + countries.map(c => `<option value="${c}">${c}</option>`).join('');
+            select.addEventListener('change', e => { state.country = e.target.value; state.page = 1; renderAll(); });
+        }
+
+        function populateActivityFilter() {
+            const activities = [...new Set(DESTINATIONS.flatMap(d => d.tags))].sort();
+            document.getElementById('activityChips').innerHTML = activities.map(a => `<button class="chip" data-value="${a}">${a}</button>`).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCountryFilter();
+            populateActivityFilter();
+
+            const allActivities = [...new Set(DESTINATIONS.flatMap(d => d.tags))].sort();
+            document.getElementById('profileActivityChips').innerHTML = allActivities.map(a => `<button class="chip" data-value="${a}">${a}</button>`).join('');
+            document.querySelectorAll('#profileThemeChips .chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('#profileThemeChips .chip').forEach(c => c.classList.remove('selected'));
+                    chip.classList.add('selected');
+                });
+            });
+            document.querySelectorAll('#profileActivityChips .chip').forEach(chip => {
+                chip.addEventListener('click', () => chip.classList.toggle('selected'));
+            });
+            document.getElementById('closeProfileModalBtn').addEventListener('click', closeProfileModal);
+            document.getElementById('profileModal').addEventListener('click', e => { if (e.target.id === 'profileModal') closeProfileModal(); });
+            document.getElementById('saveProfileBtn').addEventListener('click', () => {
+                const theme = document.querySelector('#profileThemeChips .chip.selected')?.dataset.value || null;
+                const activities = [...document.querySelectorAll('#profileActivityChips .chip.selected')].map(c => c.dataset.value);
+                if (!theme) { showToast('선호 테마를 선택해주세요', 'error'); return; }
+                setLS('userProfile', { theme, activities });
+                closeProfileModal();
+                renderRecommended();
+                showToast('여행 스타일이 저장되었습니다', 'success');
+            });
+
+            renderRecommended();
+            renderAll();
+
+            document.getElementById('filterKeyword').addEventListener('input', e => { state.keyword = e.target.value; state.page = 1; renderAll(); });
+
+            document.querySelectorAll('.chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const group = chip.closest('[data-filter]').dataset.filter;
+                    const already = chip.classList.contains('selected');
+                    chip.closest('[data-filter]').querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+                    if (!already) chip.classList.add('selected');
+                    state[group] = already ? null : chip.dataset.value;
+                    state.page = 1;
+                    renderAll();
+                });
+            });
+
+            const priceMin = document.getElementById('priceMin');
+            const priceMax = document.getElementById('priceMax');
+            function handlePriceChange() {
+                let minV = Number(priceMin.value), maxV = Number(priceMax.value);
+                if (minV > maxV) { [minV, maxV] = [maxV, minV]; }
+                state.priceMin = minV; state.priceMax = maxV;
+                updatePriceLabels();
+                state.page = 1;
+                renderAll();
+            }
+            priceMin.addEventListener('input', handlePriceChange);
+            priceMax.addEventListener('input', handlePriceChange);
+
+            document.getElementById('sortSelect').addEventListener('change', e => { state.sort = e.target.value; renderGrid(); });
+
+            document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+                state.keyword=''; state.country=''; state.theme=null; state.priceMin=0; state.priceMax=500;
+                state.duration=null; state.accessibility=null; state.season=null; state.activity=null; state.page=1;
+                document.getElementById('filterKeyword').value = '';
+                document.getElementById('filterCountry').value = '';
+                document.querySelectorAll('.chip.selected').forEach(c => c.classList.remove('selected'));
+                priceMin.value = 0; priceMax.value = 500; updatePriceLabels();
+                renderAll();
+            });
+
+            document.querySelectorAll('.view-toggle button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.view = btn.dataset.view;
+                    document.getElementById('destGrid').classList.toggle('hidden', state.view === 'map');
+                    document.getElementById('pagination').classList.toggle('hidden', state.view === 'map');
+                    document.getElementById('mapView').classList.toggle('hidden', state.view === 'grid');
+                    if (state.view === 'map') {
+                        renderMapMarkers(getFiltered());
+                        setTimeout(() => leafletMap && leafletMap.invalidateSize(), 100);
+                    }
+                });
+            });
+
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            document.getElementById('destModal').addEventListener('click', e => { if (e.target.id === 'destModal') closeModal(); });
+        });
+    </script>
+</body>
+</html>

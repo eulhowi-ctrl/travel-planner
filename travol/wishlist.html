@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>위시리스트 - TRAVOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+    .wishlist-layout { display: grid; grid-template-columns: 240px 1fr; gap: 32px; padding: 40px 0; align-items: start; }
+    .folder-list { background: var(--color-white); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); position: sticky; top: calc(var(--header-height) + 24px); }
+    .folder-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; color: var(--color-gray-700); cursor: pointer; }
+    .folder-item:hover { background: var(--color-gray-100); }
+    .folder-item.active { background: var(--color-primary); color: #fff; }
+    .folder-item .count { font-size: 12px; opacity: 0.7; font-weight: 500; }
+
+    .wishlist-summary { display: flex; justify-content: space-between; align-items: center; background: var(--color-white); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm); }
+    .wishlist-summary .total { font-size: 24px; font-weight: 700; color: var(--color-primary); }
+
+    .wish-item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+    .wish-item-card .ph { height: 120px; display:flex; align-items:center; justify-content:center; font-size:44px; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); }
+    .wish-item-body { padding: 14px; }
+    .wish-item-body .flex-between { margin-bottom: 8px; }
+    .remove-item-btn { color: var(--color-gray-500); font-size: 18px; }
+    .remove-item-btn:hover { color: var(--color-danger); }
+</style>
+</head>
+<body data-page="wishlist">
+    <div id="header-root"></div>
+
+    <div class="container">
+        <div class="wishlist-layout">
+            <aside class="folder-list" id="folderList"></aside>
+            <main>
+                <div class="wishlist-summary">
+                    <div>
+                        <div class="text-muted" style="font-size:13px;">선택한 폴더 총 예상 비용</div>
+                        <div class="total" id="folderTotal">0만원</div>
+                    </div>
+                    <button class="btn btn-secondary" id="newFolderBtn">+ 새 폴더 (Ctrl+N)</button>
+                </div>
+                <div class="wish-item-grid" id="wishItemGrid"></div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="folderModal">
+        <div class="modal-box">
+            <button class="modal-close" id="closeFolderModalBtn">&times;</button>
+            <h3 class="mb-16">새 폴더 만들기</h3>
+            <label for="newFolderName">폴더 이름</label>
+            <input type="text" id="newFolderName" placeholder="예: 신혼여행 후보">
+            <button class="btn btn-primary btn-block mt-16" id="createFolderBtn">만들기</button>
+        </div>
+    </div>
+
+    <div id="footer-root"></div>
+    <script src="script.js"></script>
+    <script>
+        let activeFolderIdx = 0;
+
+        function getWishlist() {
+            return getLS('wishlist', { folders: [{ name: '기본', items: [] }] });
+        }
+
+        function renderFolders() {
+            const wishlist = getWishlist();
+            if (activeFolderIdx >= wishlist.folders.length) activeFolderIdx = 0;
+            document.getElementById('folderList').innerHTML = wishlist.folders.map((f, i) => `
+                <div class="folder-item ${i === activeFolderIdx ? 'active' : ''}" data-folder="${i}">
+                    <span>📁 ${escapeHtml(f.name)}</span>
+                    <span class="count">${f.items.length}</span>
+                </div>
+            `).join('');
+            document.querySelectorAll('.folder-item').forEach(el => {
+                el.addEventListener('click', () => { activeFolderIdx = Number(el.dataset.folder); renderFolders(); renderItems(); });
+            });
+        }
+
+        function renderItems() {
+            const wishlist = getWishlist();
+            const folder = wishlist.folders[activeFolderIdx];
+            const total = folder.items.reduce((s, i) => s + (i.price || 0), 0);
+            document.getElementById('folderTotal').textContent = total.toLocaleString() + '만원';
+
+            const grid = document.getElementById('wishItemGrid');
+            grid.innerHTML = folder.items.length ? folder.items.map(item => `
+                <div class="card wish-item-card">
+                    <div class="ph">${item.emoji || '📍'}</div>
+                    <div class="wish-item-body">
+                        <div class="flex-between">
+                            <strong>${item.name}</strong>
+                            <button class="remove-item-btn" data-remove="${item.id}">&times;</button>
+                        </div>
+                        <span class="text-primary" style="font-weight:700;">${item.price}만원~</span>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-muted">이 폴더에 저장된 여행지가 없습니다. <a href="search.html" class="text-primary">여행지 검색하기 →</a></p>';
+
+            grid.querySelectorAll('[data-remove]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const wl = getWishlist();
+                    const f = wl.folders[activeFolderIdx];
+                    f.items = f.items.filter(i => i.id !== Number(btn.dataset.remove));
+                    setLS('wishlist', wl);
+                    renderFolders();
+                    renderItems();
+                    showToast('위시리스트에서 제거했습니다');
+                });
+            });
+        }
+
+        function openFolderModal() {
+            document.getElementById('folderModal').classList.remove('hidden');
+            document.getElementById('newFolderName').value = '';
+            document.getElementById('newFolderName').focus();
+        }
+        function closeFolderModal() { document.getElementById('folderModal').classList.add('hidden'); }
+
+        function createFolder() {
+            const name = document.getElementById('newFolderName').value.trim();
+            if (!name) { showToast('폴더 이름을 입력해주세요', 'error'); return; }
+            const wl = getWishlist();
+            wl.folders.push({ name, items: [] });
+            setLS('wishlist', wl);
+            activeFolderIdx = wl.folders.length - 1;
+            closeFolderModal();
+            renderFolders();
+            renderItems();
+            showToast(`"${name}" 폴더를 만들었습니다`, 'success');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFolders();
+            renderItems();
+
+            document.getElementById('newFolderBtn').addEventListener('click', openFolderModal);
+            document.getElementById('closeFolderModalBtn').addEventListener('click', closeFolderModal);
+            document.getElementById('createFolderBtn').addEventListener('click', createFolder);
+            document.getElementById('newFolderName').addEventListener('keydown', e => { if (e.key === 'Enter') createFolder(); });
+            document.getElementById('folderModal').addEventListener('click', e => { if (e.target.id === 'folderModal') closeFolderModal(); });
+
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+                    e.preventDefault();
+                    openFolderModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

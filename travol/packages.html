@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>패키지 - TRAVOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+    .deal-banner { background: linear-gradient(135deg, var(--color-secondary), #FF9A6B); border-radius: var(--radius-lg); padding: 28px 32px; color: #fff; display: flex; justify-content: space-between; align-items: center; margin: 32px 0; flex-wrap: wrap; gap: 16px; }
+    .deal-timer { font-size: 24px; font-weight: 700; font-family: var(--font-heading); }
+
+    .package-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 20px; }
+    .package-card .ph { height: 150px; display:flex; align-items:center; justify-content:center; font-size:48px; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); position: relative; }
+    .discount-badge { position: absolute; top: 12px; left: 12px; background: var(--color-secondary); color: #fff; padding: 4px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; }
+    .package-body { padding: 16px; }
+    .price-row { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
+    .price-original { text-decoration: line-through; color: var(--color-gray-500); font-size: 13px; }
+    .price-final { font-size: 18px; font-weight: 700; color: var(--color-secondary); }
+
+    .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 18px; }
+    .guide-card .ph { height: 100px; display:flex; align-items:center; justify-content:center; font-size:36px; background: var(--color-gray-100); }
+</style>
+</head>
+<body data-page="packages">
+    <div id="header-root"></div>
+
+    <div class="container">
+        <div class="deal-banner">
+            <div>
+                <div style="font-weight:700; font-size:18px;">🔥 오늘의 딜</div>
+                <div style="font-size:13px; opacity:0.9;">자정까지 특가로 만나보세요</div>
+            </div>
+            <div class="deal-timer" id="dealTimer">00:00:00</div>
+        </div>
+
+        <div class="chip-group mb-24" id="themeFilters">
+            <button class="chip selected" data-theme="all">전체</button>
+            <button class="chip" data-theme="family">가족</button>
+            <button class="chip" data-theme="couple">커플</button>
+            <button class="chip" data-theme="solo">혼행</button>
+            <button class="chip" data-theme="group">그룹</button>
+        </div>
+
+        <div class="package-grid" id="packageGrid"></div>
+
+        <section class="section">
+            <h2 class="section-title">테마별 여행 가이드</h2>
+            <div class="guide-grid" id="guideGrid"></div>
+        </section>
+    </div>
+
+    <div id="footer-root"></div>
+    <script src="script.js"></script>
+    <script>
+        const PACKAGES = [
+            { name: '부산 커플 여행 패키지', theme: 'couple', emoji: '🌊', basePrice: 380000, discount: 15 },
+            { name: '제주 가족 힐링 패키지', theme: 'family', emoji: '🍊', basePrice: 520000, discount: 20 },
+            { name: '도쿄 혼행 자유여행', theme: 'solo', emoji: '🗼', basePrice: 690000, discount: 10 },
+            { name: '방콕 그룹 미식 투어', theme: 'group', emoji: '🛕', basePrice: 450000, discount: 25 },
+            { name: '파리 로맨틱 커플 패키지', theme: 'couple', emoji: '💕', basePrice: 1650000, discount: 12 },
+            { name: '싱가포르 가족 테마파크', theme: 'family', emoji: '🦁', basePrice: 980000, discount: 18 },
+        ];
+
+        const GUIDES = [
+            { title: '해외 첫 여행 가이드', emoji: '🧳' },
+            { title: '가족 여행 준비물 체크리스트', emoji: '📋' },
+            { title: '혼행 안전 가이드', emoji: '🛡️' },
+            { title: '여행 예산 짜는 법', emoji: '💰' },
+        ];
+
+        let activeTheme = 'all';
+
+        function updateDealTimer() {
+            const now = new Date();
+            const midnight = new Date(now);
+            midnight.setHours(24, 0, 0, 0);
+            const diff = midnight - now;
+            const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
+            const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+            const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+            document.getElementById('dealTimer').textContent = `${h}:${m}:${s}`;
+        }
+
+        function renderPackages() {
+            const filtered = activeTheme === 'all' ? PACKAGES : PACKAGES.filter(p => p.theme === activeTheme);
+            document.getElementById('packageGrid').innerHTML = filtered.map(p => {
+                const finalPrice = Math.round(p.basePrice * (1 - p.discount / 100) / 1000) * 1000;
+                return `
+                    <div class="card package-card">
+                        <div class="ph">${p.emoji}<span class="discount-badge">${p.discount}% OFF</span></div>
+                        <div class="package-body">
+                            <strong>${p.name}</strong>
+                            <div class="price-row">
+                                <span class="price-original">${p.basePrice.toLocaleString()}원</span>
+                                <span class="price-final">${finalPrice.toLocaleString()}원</span>
+                            </div>
+                            <a href="booking.html" class="btn btn-primary btn-small btn-block mt-16">예약하기</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDealTimer();
+            setInterval(updateDealTimer, 1000);
+            renderPackages();
+
+            document.getElementById('guideGrid').innerHTML = GUIDES.map(g => `
+                <div class="card guide-card">
+                    <div class="ph">${g.emoji}</div>
+                    <div class="package-body"><strong>${g.title}</strong></div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('#themeFilters .chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('#themeFilters .chip').forEach(c => c.classList.remove('selected'));
+                    chip.classList.add('selected');
+                    activeTheme = chip.dataset.theme;
+                    renderPackages();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

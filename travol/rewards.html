@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>포인트 - TRAVOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+    .points-hero { background: linear-gradient(135deg, var(--color-primary), #7B82FF); border-radius: var(--radius-lg); padding: 40px; color: #fff; text-align: center; margin: 32px 0; }
+    .points-hero .balance { font-size: 44px; font-weight: 700; }
+    .tier-track { display: flex; justify-content: space-between; margin-top: 24px; gap: 8px; }
+    .tier-step { flex: 1; text-align: center; padding: 10px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.15); font-size: 12px; font-weight: 600; }
+    .tier-step.current { background: #fff; color: var(--color-primary); }
+
+    .earn-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; }
+    .earn-rule { padding: 18px; }
+
+    .redemption-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 18px; }
+    .redemption-card { padding: 20px; text-align: center; }
+    .redemption-card .cost { font-weight: 700; color: var(--color-primary); margin: 8px 0 14px; }
+
+    .history-tabs { display: flex; gap: 8px; margin: 24px 0 16px; }
+    .history-item { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--color-gray-100); font-size: 14px; }
+    .history-item .pts.positive { color: var(--color-success); font-weight: 700; }
+    .history-item .pts.negative { color: var(--color-danger); font-weight: 700; }
+</style>
+</head>
+<body data-page="rewards">
+    <div id="header-root"></div>
+
+    <div class="container">
+        <div class="points-hero">
+            <div class="text-muted" style="color:rgba(255,255,255,0.8);">보유 포인트</div>
+            <div class="balance" id="balanceDisplay">0P</div>
+            <div class="mt-16" id="tierLabel"></div>
+            <div class="tier-track" id="tierTrack"></div>
+        </div>
+
+        <section class="section">
+            <h2 class="section-title">포인트 적립 방법</h2>
+            <div class="earn-rules">
+                <div class="card earn-rule"><strong>예약 완료</strong><p class="text-muted mt-16">결제 금액의 3% 적립</p></div>
+                <div class="card earn-rule"><strong>후기 작성</strong><p class="text-muted mt-16">사진 포함 시 500P, 미포함 200P</p></div>
+                <div class="card earn-rule"><strong>친구 초대</strong><p class="text-muted mt-16">초대당 1,000P</p></div>
+                <div class="card earn-rule"><strong>커뮤니티 활동</strong><p class="text-muted mt-16">Q&A 답변 채택 시 300P</p></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">포인트 사용하기</h2>
+            <div class="redemption-grid" id="redemptionGrid"></div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">포인트 내역</h2>
+            <div class="history-tabs" id="historyTabs">
+                <button class="chip selected" data-tab="all">전체</button>
+                <button class="chip" data-tab="earn">적립</button>
+                <button class="chip" data-tab="use">사용</button>
+            </div>
+            <div id="historyList"></div>
+        </section>
+    </div>
+
+    <div id="footer-root"></div>
+    <script src="script.js"></script>
+    <script>
+        const TIERS = [
+            { name: 'BRONZE', min: 0 }, { name: 'SILVER', min: 10000 },
+            { name: 'GOLD', min: 30000 }, { name: 'PLATINUM', min: 60000 },
+        ];
+        const REDEMPTIONS = [
+            { label: '5,000원 할인 쿠폰', cost: 5000, emoji: '🎟️' },
+            { label: '10,000원 할인 쿠폰', cost: 10000, emoji: '🎟️' },
+            { label: '20,000원 할인 쿠폰', cost: 20000, emoji: '🎫' },
+            { label: '호텔 업그레이드 바우처', cost: 15000, emoji: '🏨' },
+            { label: '카페 기프티콘', cost: 8000, emoji: '☕' },
+            { label: '항공 마일리지 전환', cost: 30000, emoji: '✈️' },
+        ];
+        let historyFilter = 'all';
+
+        function ensureWelcomeBonus() {
+            const data = getTravolPoints();
+            if (data.balance === 0 && data.history.length === 0) {
+                earnPoints('TRAVOL 가입 축하 포인트', 5000);
+            }
+        }
+
+        function currentTier(balance) {
+            let tier = TIERS[0];
+            for (const t of TIERS) if (balance >= t.min) tier = t;
+            return tier;
+        }
+
+        function renderHero() {
+            const data = getTravolPoints();
+            document.getElementById('balanceDisplay').textContent = data.balance.toLocaleString() + 'P';
+            const tier = currentTier(data.balance);
+            document.getElementById('tierLabel').textContent = `${tier.name} 등급`;
+            document.getElementById('tierTrack').innerHTML = TIERS.map(t => `
+                <div class="tier-step ${t.name === tier.name ? 'current' : ''}">${t.name}</div>
+            `).join('');
+        }
+
+        function renderRedemptions() {
+            const data = getTravolPoints();
+            document.getElementById('redemptionGrid').innerHTML = REDEMPTIONS.map((r, i) => `
+                <div class="card redemption-card">
+                    <div style="font-size:32px;">${r.emoji}</div>
+                    <strong class="mt-16" style="display:block;">${r.label}</strong>
+                    <div class="cost">${r.cost.toLocaleString()}P</div>
+                    <button class="btn ${data.balance >= r.cost ? 'btn-primary' : 'btn-secondary'} btn-small btn-block" data-redeem="${i}" ${data.balance >= r.cost ? '' : 'disabled'}>교환하기</button>
+                </div>
+            `).join('');
+            document.querySelectorAll('[data-redeem]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const item = REDEMPTIONS[Number(btn.dataset.redeem)];
+                    const data = getTravolPoints();
+                    if (data.balance < item.cost) { showToast('포인트가 부족합니다', 'error'); return; }
+                    data.balance -= item.cost;
+                    data.history.unshift({ desc: `${item.label} 교환`, points: -item.cost, date: new Date().toISOString() });
+                    setLS('travolPoints', data);
+                    showToast(`${item.label}으로 교환했습니다`, 'success');
+                    renderAll();
+                });
+            });
+        }
+
+        function renderHistory() {
+            const data = getTravolPoints();
+            let list = data.history;
+            if (historyFilter === 'earn') list = list.filter(h => h.points > 0);
+            if (historyFilter === 'use') list = list.filter(h => h.points < 0);
+            document.getElementById('historyList').innerHTML = list.length ? list.map(h => `
+                <div class="history-item">
+                    <div>
+                        <div>${h.desc}</div>
+                        <div class="text-muted" style="font-size:12px;">${new Date(h.date).toLocaleDateString('ko-KR')}</div>
+                    </div>
+                    <div class="pts ${h.points > 0 ? 'positive' : 'negative'}">${h.points > 0 ? '+' : ''}${h.points.toLocaleString()}P</div>
+                </div>
+            `).join('') : '<p class="text-muted">내역이 없습니다.</p>';
+        }
+
+        function renderAll() { renderHero(); renderRedemptions(); renderHistory(); }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            ensureWelcomeBonus();
+            renderAll();
+
+            document.querySelectorAll('#historyTabs .chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('#historyTabs .chip').forEach(c => c.classList.remove('selected'));
+                    chip.classList.add('selected');
+                    historyFilter = chip.dataset.tab;
+                    renderHistory();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>예약 - TRAVOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+    .booking-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; padding: 40px 0; align-items: start; }
+    .booking-form .form-group { margin-bottom: 20px; }
+    .time-slots { display: flex; gap: 8px; flex-wrap: wrap; }
+    .time-slot { padding: 10px 16px; border-radius: var(--radius-sm); border: 1.5px solid var(--color-gray-300); font-size: 13px; font-weight: 600; }
+    .time-slot.selected { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .qty-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--color-gray-100); }
+    .qty-control { display: flex; align-items: center; gap: 12px; }
+    .qty-control button { width: 28px; height: 28px; border-radius: 50%; background: var(--color-gray-100); font-weight: 700; }
+
+    .summary-card { position: sticky; top: calc(var(--header-height) + 24px); padding: 24px; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; }
+    .summary-row.total { font-size: 18px; font-weight: 700; border-top: 1px solid var(--color-gray-100); padding-top: 12px; margin-top: 12px; }
+    .coupon-msg { font-size: 12px; margin-top: 6px; }
+    .coupon-msg.error { color: var(--color-danger); }
+    .coupon-msg.success { color: var(--color-success); }
+</style>
+</head>
+<body data-page="booking">
+    <div id="header-root"></div>
+
+    <div class="container">
+        <div class="booking-layout">
+            <div class="booking-form">
+                <h1 class="mb-24">예약하기 — 해운대 감성 투어</h1>
+
+                <div class="form-group">
+                    <label for="bookingDate">날짜 선택</label>
+                    <input type="date" id="bookingDate">
+                </div>
+
+                <div class="form-group">
+                    <label>시간대 선택</label>
+                    <div class="time-slots" id="timeSlots">
+                        <button class="time-slot" data-time="09:00">09:00</button>
+                        <button class="time-slot" data-time="11:00">11:00</button>
+                        <button class="time-slot" data-time="14:00">14:00</button>
+                        <button class="time-slot" data-time="16:00">16:00</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="qty-row">
+                        <div><strong>성인</strong><div class="text-muted" style="font-size:12px;">45,000원</div></div>
+                        <div class="qty-control">
+                            <button data-qty="adult" data-delta="-1">−</button>
+                            <span id="adultCount">1</span>
+                            <button data-qty="adult" data-delta="1">+</button>
+                        </div>
+                    </div>
+                    <div class="qty-row">
+                        <div><strong>어린이</strong><div class="text-muted" style="font-size:12px;">22,500원</div></div>
+                        <div class="qty-control">
+                            <button data-qty="child" data-delta="-1">−</button>
+                            <span id="childCount">0</span>
+                            <button data-qty="child" data-delta="1">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="couponInput">쿠폰 코드</label>
+                    <div class="flex gap-8">
+                        <input type="text" id="couponInput" placeholder="예: SAVE50000">
+                        <button class="btn btn-secondary" id="applyCouponBtn">적용</button>
+                    </div>
+                    <div class="coupon-msg" id="couponMsg"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="pointsInput">포인트 사용 (보유: <span id="pointsBalance">0</span>P)</label>
+                    <input type="number" id="pointsInput" min="0" value="0">
+                </div>
+            </div>
+
+            <div class="card summary-card">
+                <h3 class="mb-16">결제 요약</h3>
+                <div class="summary-row"><span>성인 <span id="sumAdultQty">1</span>명</span><span id="sumAdultAmount">45,000원</span></div>
+                <div class="summary-row"><span>어린이 <span id="sumChildQty">0</span>명</span><span id="sumChildAmount">0원</span></div>
+                <div class="summary-row"><span>쿠폰 할인</span><span id="sumDiscount">-0원</span></div>
+                <div class="summary-row"><span>포인트 사용</span><span id="sumPoints">-0원</span></div>
+                <div class="summary-row total"><span>총 결제 금액</span><span id="sumTotal">45,000원</span></div>
+                <button class="btn btn-primary btn-block mt-16" id="confirmBookingBtn">예약 확정하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="confirmModal">
+        <div class="modal-box text-center">
+            <div style="font-size:48px;">🎉</div>
+            <h2 class="mt-16">예약이 완료되었습니다!</h2>
+            <p class="text-muted mt-16">예약번호</p>
+            <p style="font-size:20px; font-weight:700; color:var(--color-primary);" id="bookingNumberDisplay"></p>
+            <img id="bookingQrImg" width="160" height="160" style="margin:16px auto 0; border-radius:var(--radius-sm);" alt="예약 확인 QR 코드">
+            <p class="text-muted" style="font-size:12px;">QR 코드로 예약 확인서를 저장하세요</p>
+            <a href="itinerary.html" class="btn btn-primary btn-block mt-24">일정에서 확인하기</a>
+        </div>
+    </div>
+
+    <div id="footer-root"></div>
+    <script src="script.js"></script>
+    <script src="qr-generator.js"></script>
+    <script>
+        const ADULT_PRICE = 45000, CHILD_PRICE = 22500;
+        const COUPONS = {
+            'WELCOME5000': { discount: 5000, minAmount: 0 },
+            'SAVE50000': { discount: 50000, minAmount: 100000 },
+        };
+        let adultCount = 1, childCount = 0, appliedCoupon = null, selectedTime = null;
+
+        function computeSubtotal() {
+            return adultCount * ADULT_PRICE + childCount * CHILD_PRICE;
+        }
+
+        function updateSummary() {
+            const subtotal = computeSubtotal();
+
+            // Coupon auto-invalidation if subtotal drops below minAmount (Problem #4 fix from v4 diary)
+            let discount = 0;
+            if (appliedCoupon) {
+                const coupon = COUPONS[appliedCoupon];
+                if (subtotal < coupon.minAmount) {
+                    appliedCoupon = null;
+                    document.getElementById('couponMsg').textContent = `쿠폰 조건(최소 ${coupon.minAmount.toLocaleString()}원)을 충족하지 않아 자동 해제되었습니다`;
+                    document.getElementById('couponMsg').className = 'coupon-msg error';
+                    showToast('쿠폰 적용 조건이 맞지 않아 해제되었습니다', 'error');
+                } else {
+                    discount = coupon.discount;
+                }
+            }
+
+            const pointsInput = document.getElementById('pointsInput');
+            const balance = getTravolPoints().balance;
+            let pointsUsed = Math.max(0, Math.min(Number(pointsInput.value) || 0, balance, subtotal - discount));
+            pointsInput.value = pointsUsed;
+
+            const total = Math.max(0, subtotal - discount - pointsUsed);
+
+            document.getElementById('sumAdultQty').textContent = adultCount;
+            document.getElementById('sumChildQty').textContent = childCount;
+            document.getElementById('sumAdultAmount').textContent = (adultCount * ADULT_PRICE).toLocaleString() + '원';
+            document.getElementById('sumChildAmount').textContent = (childCount * CHILD_PRICE).toLocaleString() + '원';
+            document.getElementById('sumDiscount').textContent = '-' + discount.toLocaleString() + '원';
+            document.getElementById('sumPoints').textContent = '-' + pointsUsed.toLocaleString() + '원';
+            document.getElementById('sumTotal').textContent = total.toLocaleString() + '원';
+            document.getElementById('pointsBalance').textContent = balance.toLocaleString();
+
+            return { subtotal, discount, pointsUsed, total };
+        }
+
+        function generateBookingNumber() {
+            const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
+            return `TRV-${Date.now().toString().slice(-6)}-${rand}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('bookingDate').valueAsDate = new Date();
+            updateSummary();
+
+            document.querySelectorAll('.time-slot').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedTime = btn.dataset.time;
+                });
+            });
+
+            document.querySelectorAll('[data-qty]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const type = btn.dataset.qty, delta = Number(btn.dataset.delta);
+                    if (type === 'adult') adultCount = Math.max(1, adultCount + delta);
+                    if (type === 'child') childCount = Math.max(0, childCount + delta);
+                    document.getElementById('adultCount').textContent = adultCount;
+                    document.getElementById('childCount').textContent = childCount;
+                    updateSummary();
+                });
+            });
+
+            document.getElementById('applyCouponBtn').addEventListener('click', () => {
+                const code = document.getElementById('couponInput').value.trim().toUpperCase();
+                const coupon = COUPONS[code];
+                const msgEl = document.getElementById('couponMsg');
+                if (!coupon) { msgEl.textContent = '유효하지 않은 쿠폰입니다'; msgEl.className = 'coupon-msg error'; return; }
+                if (computeSubtotal() < coupon.minAmount) {
+                    msgEl.textContent = `${coupon.minAmount.toLocaleString()}원 이상 결제 시 사용 가능한 쿠폰입니다`;
+                    msgEl.className = 'coupon-msg error';
+                    return;
+                }
+                appliedCoupon = code;
+                msgEl.textContent = `${coupon.discount.toLocaleString()}원 할인 쿠폰이 적용되었습니다`;
+                msgEl.className = 'coupon-msg success';
+                updateSummary();
+            });
+
+            document.getElementById('pointsInput').addEventListener('input', updateSummary);
+
+            document.getElementById('confirmBookingBtn').addEventListener('click', () => {
+                if (!selectedTime) { showToast('시간대를 선택해주세요', 'error'); return; }
+                const { total, pointsUsed } = updateSummary();
+                const bookingNumber = generateBookingNumber();
+
+                const bookings = getLS('bookings', []);
+                bookings.unshift({
+                    bookingNumber, date: document.getElementById('bookingDate').value, time: selectedTime,
+                    adultCount, childCount, total, createdAt: new Date().toISOString(),
+                });
+                setLS('bookings', bookings);
+
+                if (pointsUsed > 0) {
+                    const data = getTravolPoints();
+                    data.balance -= pointsUsed;
+                    data.history.unshift({ desc: '예약 결제 시 포인트 사용', points: -pointsUsed, date: new Date().toISOString() });
+                    setLS('travolPoints', data);
+                }
+                earnPoints('예약 완료 적립', Math.round(total * 0.03));
+
+                document.getElementById('bookingNumberDisplay').textContent = bookingNumber;
+                const qrData = `TRAVOL 예약확인\n예약번호: ${bookingNumber}\n날짜: ${document.getElementById('bookingDate').value} ${selectedTime}\n인원: 성인 ${adultCount} / 어린이 ${childCount}`;
+                document.getElementById('bookingQrImg').src = buildQrUrl(qrData, 160);
+                document.getElementById('confirmModal').classList.remove('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
