@@ -33,12 +33,22 @@ const DEMO_WEATHER = {
     ]},
 };
 
+// OpenWeather's q= param doesn't resolve Korean city names, so demo cities are looked up by lat/lon instead.
+const CITY_COORDS = {
+    '서울': [37.5665, 126.9780], '부산': [35.1796, 129.0756], '제주도': [33.4996, 126.5312],
+    '도쿄': [35.6762, 139.6503], '방콕': [13.7563, 100.5018], '파리': [48.8566, 2.3522],
+};
+
 async function getWeather(city) {
     if (WEATHER_CONFIG.demoMode || !WEATHER_CONFIG.apiKey) {
         return DEMO_WEATHER[city] || DEMO_WEATHER['서울'];
     }
     try {
-        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${WEATHER_CONFIG.apiKey}&units=metric&lang=kr`);
+        const coords = CITY_COORDS[city];
+        const url = coords
+            ? `https://api.openweathermap.org/data/2.5/weather?lat=${coords[0]}&lon=${coords[1]}&appid=${WEATHER_CONFIG.apiKey}&units=metric&lang=kr`
+            : `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${WEATHER_CONFIG.apiKey}&units=metric&lang=kr`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error('weather api request failed');
         const data = await res.json();
         return {
