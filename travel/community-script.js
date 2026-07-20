@@ -18,14 +18,6 @@ const BUDDY_SEED = [
     { name: '박지우', destination: '싱가포르', dates: '2026.11.20 - 11.24', bio: '가족 여행인데 다른 가족과 정보 공유하고 싶어요.' },
 ];
 
-const RANKING_SEED = [
-    { name: '여행의달인', reviews: 312, points: 89000 },
-    { name: '맛집헌터', reviews: 278, points: 76500 },
-    { name: '뚜벅이여행자', reviews: 245, points: 68200 },
-    { name: '카메라든여행자', reviews: 198, points: 54100 },
-    { name: '휴양전문가', reviews: 176, points: 49800 },
-];
-
 function renderQnaList() {
     const posts = getLS('communityPosts', []);
     const all = [...posts, ...QNA_SEED];
@@ -73,23 +65,9 @@ function renderBuddyList() {
 
     document.querySelectorAll('.btn-buddy-contact').forEach(btn => {
         btn.addEventListener('click', () => {
-            const buddy = BUDDY_SEED[Number(btn.dataset.buddy)];
-            showToast(`${buddy.name}님에게 연락 요청을 보냈습니다`, 'success');
+            showToast('여행 버디 연락 기능은 아직 준비 중이에요');
         });
     });
-}
-
-function renderRanking() {
-    document.getElementById('rankingList').innerHTML = RANKING_SEED.map((r, i) => `
-        <div class="ranking-item ${i < 3 ? 'top-3' : ''}">
-            <div class="rank-num">${i + 1}</div>
-            <div class="ranking-info">
-                <strong>${r.name}</strong>
-                <div class="ranking-stats">후기 ${r.reviews}개 · ${r.points.toLocaleString()}P 적립</div>
-            </div>
-            ${i < 3 ? '<span class="badge badge-gold">🏆 TOP 3</span>' : ''}
-        </div>
-    `).join('');
 }
 
 function switchTab(tabName) {
@@ -122,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderQnaList();
     renderStories();
     renderBuddyList();
-    renderRanking();
 
     document.querySelectorAll('.community-tab').forEach(tab => {
         tab.addEventListener('click', () => switchTab(tab.dataset.tab));

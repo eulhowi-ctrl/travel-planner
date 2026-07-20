@@ -32,9 +32,6 @@
     .budget-item .amount { font-size: 20px; font-weight: 700; color: var(--color-primary); }
     .budget-item .label { font-size: 12px; color: var(--color-gray-500); margin-top: 4px; }
 
-    .review-item { padding: 20px 0; border-bottom: 1px solid var(--color-gray-100); }
-    .review-stars { color: var(--color-warning); }
-
     .share-row { display: flex; gap: 12px; margin-top: 24px; }
 
     .transport-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -81,18 +78,8 @@
         </section>
 
         <section class="section">
-            <div class="flex-between mb-16">
-                <h2 class="section-title" style="margin-bottom:0;">여행 후기</h2>
-                <a href="host-profile.html" class="btn btn-secondary btn-small">호스트 프로필 보기 →</a>
-            </div>
-            <div class="chip-group mb-24" id="reviewFilters">
-                <button class="chip selected" data-filter="all">전체</button>
-                <button class="chip" data-filter="5">★5점</button>
-                <button class="chip" data-filter="4">★4점</button>
-                <button class="chip" data-filter="low">★3점 이하</button>
-                <button class="chip" data-filter="photo">사진 리뷰</button>
-            </div>
-            <div id="reviewList"></div>
+            <h2 class="section-title">여행 후기</h2>
+            <div id="reviewSection"></div>
         </section>
 
         <div class="share-row">
@@ -108,7 +95,6 @@
             <div class="qr-tabs chip-group">
                 <button class="chip selected" data-qr="link">공유 링크</button>
                 <button class="chip" data-qr="wifi">숙소 와이파이</button>
-                <button class="chip" data-qr="contact">호스트 연락처</button>
             </div>
             <div class="qr-display" id="qrDisplay"></div>
         </div>
@@ -123,6 +109,7 @@
         const BUSAN_ITINERARY = {
             title: '부산 3박 4일 여행',
             city: '부산',
+            country: '대한민국',
             budgetItems: [
                 { label: '항공/교통', amount: 350000 },
                 { label: '숙박', amount: 420000 },
@@ -136,19 +123,19 @@
                     items: [
                         { time: '10:00', title: '해운대 해수욕장', desc: '부산 대표 해변에서 여유로운 산책', links: [
                             { label: '네이버맵', url: 'https://map.naver.com/p/search/해운대해수욕장' },
-                            { label: '카페 후기', url: 'https://cafe.naver.com/firstlove' },
+                            { label: '카페 후기', url: naverReviewSearchUrl('해운대해수욕장') },
                             { label: '블로그', url: 'https://section.blog.naver.com/Search/Search.naver?query=해운대해수욕장' },
                         ]},
                         { time: '13:00', title: '해운대시장 점심', desc: '씨앗호떡과 회로 든든하게', links: [
                             { label: '네이버맵', url: 'https://map.naver.com/p/search/해운대시장' },
-                            { label: '맛집 후기', url: 'https://cafe.naver.com/firstlove' },
+                            { label: '맛집 후기', url: naverReviewSearchUrl('해운대시장') },
                         ]},
                         { time: '16:00', title: '동백섬 산책', desc: '누리마루 APEC하우스까지 산책로', links: [
                             { label: '네이버맵', url: 'https://map.naver.com/p/search/동백섬' },
                         ]},
                         { time: '19:00', title: '광안리 야경', desc: '광안대교 야경 명소에서 저녁 식사', links: [
                             { label: '네이버맵', url: 'https://map.naver.com/p/search/광안리해수욕장' },
-                            { label: '카페 후기', url: 'https://cafe.naver.com/firstlove' },
+                            { label: '카페 후기', url: naverReviewSearchUrl('광안리해수욕장') },
                             { label: '블로그', url: 'https://section.blog.naver.com/Search/Search.naver?query=광안리야경' },
                         ]},
                     ]
@@ -168,7 +155,7 @@
                         ]},
                         { time: '18:30', title: 'BIFF광장 & 남포동', desc: '씨앗호떡 거리와 야시장', links: [
                             { label: '네이버맵', url: 'https://map.naver.com/p/search/BIFF광장' },
-                            { label: '카페 후기', url: 'https://cafe.naver.com/firstlove' },
+                            { label: '카페 후기', url: naverReviewSearchUrl('BIFF광장') },
                         ]},
                     ]
                 },
@@ -234,13 +221,13 @@
                     activityIdx++;
                     return {
                         time: slot.time, title: `${dest.name} ${tag} 코스`, desc: `${dest.name}에서 ${tag} 테마로 즐기는 일정이에요`,
-                        links: [{ label: '네이버맵', url: `https://map.naver.com/p/search/${encodeURIComponent(dest.name)}` }],
+                        links: [{ label: '네이버맵', url: `https://map.naver.com/p/search/${encodeURIComponent(dest.baseCity || dest.name)}` }],
                     };
                 });
                 days.push({ day: d + 1, date: '', items });
             }
             return {
-                title: `${dest.name} ${dayCount}일 여행`, city: dest.baseCity || dest.name, days, dayCount,
+                title: `${dest.name} ${dayCount}일 여행`, city: dest.baseCity || dest.name, country: dest.country, days, dayCount,
                 budgetItems: buildBudgetItems(dest.price * 10000),
             };
         }
@@ -255,19 +242,6 @@
         }
 
         const ITINERARY = resolveItinerary();
-
-        const REVIEWS = [
-            { id: 1, name: '김민지', rating: 5, categories: { location: 5, service: 5, value: 4, communication: 5 },
-              comment: '동선이 알차게 짜여있어서 시간 낭비 없이 다 둘러봤어요! 호스트님 응답도 빨랐습니다.',
-              photos: ['🌊', '🌉'], hostReply: '좋은 후기 감사합니다! 다음에도 즐거운 여행 되세요 :)', helpfulCount: 12 },
-            { id: 2, name: '이준호', rating: 4, categories: { location: 5, service: 4, value: 4, communication: 4 },
-              comment: '3일차 이기대 코스는 정말 강추입니다. 노을이 최고예요.',
-              photos: [], hostReply: null, helpfulCount: 6 },
-            { id: 3, name: '박수아', rating: 3, categories: { location: 3, service: 3, value: 3, communication: 4 },
-              comment: '전반적으로 괜찮았지만 이동 동선이 조금 빡빡했어요.',
-              photos: ['🍜'], hostReply: '피드백 감사합니다. 다음 코스에 반영하겠습니다!', helpfulCount: 2 },
-        ];
-        let reviewFilter = 'all';
 
         // Static transportation data, mapped by city (long-distance + local + tips).
         const TRANSPORT_DATA = {
@@ -298,7 +272,10 @@
         function renderLocalTips() {
             const tips = LOCAL_TIPS[ITINERARY.city];
             const el = document.getElementById('localTipsSection');
-            if (!tips) { el.innerHTML = ''; return; }
+            if (!tips) {
+                el.innerHTML = `<div class="card" style="padding:20px 24px;"><p class="text-muted" style="margin:0;">🧭 ${ITINERARY.city}의 현지인 팁은 아직 준비 중이에요.</p></div>`;
+                return;
+            }
             el.innerHTML = `
                 <div class="card" style="padding:20px 24px;">
                     <h4 class="mb-16">🧭 현지인 팁</h4>
@@ -309,16 +286,24 @@
             `;
         }
 
+        // Domestic (non-Jeju) destinations aren't realistically reached by air —
+        // KTX/intercity bus is how people actually travel there, so those get
+        // train/bus links instead of a flight search.
         function renderPriceCheckSection() {
             const el = document.getElementById('priceCheckSection');
+            const isDomesticByLand = ITINERARY.country === '대한민국' && ITINERARY.city !== '제주도';
+            const transportButtons = isDomesticByLand
+                ? `<a href="${KORAIL_SEARCH_URL}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚄 코레일 조회</a>
+                   <a href="${naverBusTerminalSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚌 시외버스터미널</a>`
+                : `<a href="${naverFlightSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">✈️ 항공권 확인</a>`;
             el.innerHTML = `
                 <div class="card" style="padding:20px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                     <div>
-                        <strong>💸 실시간 항공권 · 숙소 가격 확인</strong>
+                        <strong>💸 실시간 교통 · 숙소 가격 확인</strong>
                         <p class="text-muted" style="font-size:13px; margin-top:4px;">네이버에서 ${ITINERARY.city}의 실제 가격을 확인해보세요</p>
                     </div>
                     <div class="flex gap-8">
-                        <a href="${naverFlightSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">✈️ 항공권 확인</a>
+                        ${transportButtons}
                         <a href="${naverHotelSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🏨 숙소 확인</a>
                     </div>
                 </div>
@@ -328,7 +313,10 @@
         function renderTransportSection() {
             const data = TRANSPORT_DATA[ITINERARY.city];
             const el = document.getElementById('transportSection');
-            if (!data) { el.innerHTML = ''; return; }
+            if (!data) {
+                el.innerHTML = `<div class="card" style="padding:20px 24px;"><p class="text-muted" style="margin:0;">🚗 ${ITINERARY.city}의 상세 교통 정보는 아직 준비 중이에요.</p></div>`;
+                return;
+            }
             el.innerHTML = `
                 <div class="transport-grid">
                     <div class="card transport-card">
@@ -367,9 +355,11 @@
                         dayItems.push({ time: slot.time, title: '식사 시간', desc: '근처 맛집에서 여유롭게 식사하세요', links: [] });
                     } else if (itemIdx < items.length) {
                         const item = items[itemIdx++];
+                        const fullDest = (typeof DESTINATIONS_FULL !== 'undefined' ? DESTINATIONS_FULL : []).find(d => d.id === item.id);
+                        const mapQuery = (fullDest && fullDest.baseCity) || item.name;
                         dayItems.push({
                             time: slot.time, title: item.name, desc: `${item.name} 방문 (위시리스트에서 자동 배치)`,
-                            links: [{ label: '네이버맵', url: `https://map.naver.com/p/search/${encodeURIComponent(item.name)}` }],
+                            links: [{ label: '네이버맵', url: `https://map.naver.com/p/search/${encodeURIComponent(mapQuery)}` }],
                         });
                     }
                 });
@@ -435,43 +425,14 @@
             `;
         }
 
-        function getFilteredReviews() {
-            if (reviewFilter === 'all') return REVIEWS;
-            if (reviewFilter === '5') return REVIEWS.filter(r => r.rating === 5);
-            if (reviewFilter === '4') return REVIEWS.filter(r => r.rating === 4);
-            if (reviewFilter === 'low') return REVIEWS.filter(r => r.rating <= 3);
-            if (reviewFilter === 'photo') return REVIEWS.filter(r => r.photos.length > 0);
-            return REVIEWS;
-        }
-
-        function renderReviews() {
-            const votes = getLS('reviewVotes', {});
-            const catLabels = { location: '위치', service: '서비스', value: '가성비', communication: '소통' };
-            document.getElementById('reviewList').innerHTML = getFilteredReviews().map(r => `
-                <div class="review-item">
-                    <div class="flex-between">
-                        <strong>${r.name}</strong>
-                        <span class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
-                    </div>
-                    <div class="chip-group mt-16 mb-16">
-                        ${Object.entries(r.categories).map(([k,v]) => `<span class="chip">${catLabels[k]} ${v}.0</span>`).join('')}
-                    </div>
-                    <p class="text-muted">${r.comment}</p>
-                    ${r.photos.length ? `<div class="flex gap-8 mt-16">${r.photos.map((p, i) => `<div style="width:56px;height:56px;border-radius:8px;background-image:url('${photoUrl('review-' + r.id + '-' + i)}');background-size:cover;background-position:center;"></div>`).join('')}</div>` : ''}
-                    ${r.hostReply ? `<div class="mt-16" style="background:var(--color-light); border-radius:var(--radius-sm); padding:12px 14px;"><strong style="font-size:13px;">🏠 호스트 답글</strong><p style="font-size:13px; margin-top:4px;">${r.hostReply}</p></div>` : ''}
-                    <button class="btn btn-ghost btn-small mt-16" data-vote="${r.id}">👍 도움됐어요${votes[r.id] ? ' <span class="text-primary">✓</span>' : ''} (${r.helpfulCount + (votes[r.id] ? 1 : 0)})</button>
+        function renderReviewSection() {
+            const el = document.getElementById('reviewSection');
+            el.innerHTML = `
+                <div class="card" style="padding:20px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                    <p class="text-muted" style="margin:0;">네이버 카페·블로그에 올라온 ${ITINERARY.city} 실제 여행 후기를 확인해보세요.</p>
+                    <a href="${naverReviewSearchUrl(ITINERARY.city + ' 여행')}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🔗 후기 보러가기</a>
                 </div>
-            `).join('');
-
-            document.querySelectorAll('[data-vote]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const id = btn.dataset.vote;
-                    const v = getLS('reviewVotes', {});
-                    v[id] = !v[id];
-                    setLS('reviewVotes', v);
-                    renderReviews();
-                });
-            });
+            `;
         }
 
         function renderQrTab(type) {
@@ -479,7 +440,6 @@
             let data, label;
             if (type === 'link') { data = window.location.href; label = '이 일정 공유 링크'; }
             if (type === 'wifi') { data = buildWifiQrData('TRAVEL_GUEST', 'travel1234'); label = '숙소 와이파이 (SSID: TRAVEL_GUEST)'; }
-            if (type === 'contact') { data = buildContactQrData({ name: '김준호', phone: '010-1234-5678', email: 'host@travel.com' }); label = '호스트 연락처 저장'; }
             el.innerHTML = `<img src="${buildQrUrl(data)}" alt="QR code" width="180" height="180"><p class="text-muted">${label}</p>`;
         }
 
@@ -495,16 +455,7 @@
             renderDayTabs();
             renderSchedule(0);
             renderBudgetAnalysis();
-            renderReviews();
-
-            document.querySelectorAll('#reviewFilters .chip').forEach(chip => {
-                chip.addEventListener('click', () => {
-                    document.querySelectorAll('#reviewFilters .chip').forEach(c => c.classList.remove('selected'));
-                    chip.classList.add('selected');
-                    reviewFilter = chip.dataset.filter;
-                    renderReviews();
-                });
-            });
+            renderReviewSection();
 
             document.getElementById('copyLinkBtn').addEventListener('click', () => {
                 navigator.clipboard.writeText(window.location.href).then(() => showToast('링크가 복사되었습니다', 'success'));

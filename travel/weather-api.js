@@ -1,8 +1,12 @@
 // ==================== Weather Module (demo-mode pattern) ====================
 // Set WEATHER_CONFIG.apiKey to switch from demo data to live OpenWeather calls.
 // No code changes needed elsewhere when a real key is added.
+// The real key is injected by the GitHub Actions deploy workflow (see
+// .github/workflows/pages.yml) from the OPENWEATHER_API_KEY repo secret, so it
+// never appears in source control. Locally, this placeholder is left as-is and
+// the app runs in demo mode.
 const WEATHER_CONFIG = {
-    apiKey: '08546cefc93369b0afdeb482c28cfd8b', // OpenWeather API key. Empty = demo mode.
+    apiKey: '__OPENWEATHER_API_KEY__',
     demoMode: false,
 };
 
@@ -33,18 +37,31 @@ const DEMO_WEATHER = {
     ]},
 };
 
-// OpenWeather's q= param doesn't resolve Korean city names, so demo cities are looked up by lat/lon instead.
+// OpenWeather's q= param doesn't resolve Korean city names, so cities are looked
+// up by lat/lon instead. A handful of demo cities are hardcoded below; every
+// other destination's coordinates come from destinations-data.js's
+// DESTINATIONS_FULL (already has lat/lng per city), so live lookups work across
+// the whole destination catalog, not just these six.
 const CITY_COORDS = {
     '서울': [37.5665, 126.9780], '부산': [35.1796, 129.0756], '제주도': [33.4996, 126.5312],
     '도쿄': [35.6762, 139.6503], '방콕': [13.7563, 100.5018], '파리': [48.8566, 2.3522],
 };
 
+function lookupCityCoords(city) {
+    if (CITY_COORDS[city]) return CITY_COORDS[city];
+    if (typeof DESTINATIONS_FULL !== 'undefined') {
+        const match = DESTINATIONS_FULL.find(d => d.baseCity === city || d.name === city);
+        if (match) return [match.lat, match.lng];
+    }
+    return null;
+}
+
 async function getWeather(city) {
-    if (WEATHER_CONFIG.demoMode || !WEATHER_CONFIG.apiKey) {
-        return DEMO_WEATHER[city] || DEMO_WEATHER['서울'];
+    if (WEATHER_CONFIG.demoMode || !WEATHER_CONFIG.apiKey || WEATHER_CONFIG.apiKey === '__OPENWEATHER_API_KEY__') {
+        return DEMO_WEATHER[city] || { unavailable: true };
     }
     try {
-        const coords = CITY_COORDS[city];
+        const coords = lookupCityCoords(city);
         const url = coords
             ? `https://api.openweathermap.org/data/2.5/weather?lat=${coords[0]}&lon=${coords[1]}&appid=${WEATHER_CONFIG.apiKey}&units=metric&lang=kr`
             : `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${WEATHER_CONFIG.apiKey}&units=metric&lang=kr`;
@@ -60,7 +77,7 @@ async function getWeather(city) {
             hourly: [],
         };
     } catch (e) {
-        return DEMO_WEATHER[city] || DEMO_WEATHER['서울'];
+        return DEMO_WEATHER[city] || { unavailable: true };
     }
 }
 
@@ -77,6 +94,14 @@ function renderWeatherWidget(containerId, city) {
     const el = document.getElementById(containerId);
     if (!el) return;
     getWeather(city).then(weather => {
+        if (weather.unavailable) {
+            el.innerHTML = `
+                <div class="card" style="padding:24px;">
+                    <p class="text-muted" style="margin:0;">🌤️ ${city}의 실시간 날씨 정보를 아직 준비하지 못했어요.</p>
+                </div>
+            `;
+            return;
+        }
         const tips = getWeatherTips(weather);
         el.innerHTML = `
             <div class="card" style="padding:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">

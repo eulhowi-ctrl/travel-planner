@@ -7,7 +7,3 @@ function buildQrUrl(data, size = 180) {
 function buildWifiQrData(ssid, password, encryption = 'WPA') {
     return `WIFI:T:${encryption};S:${ssid};P:${password};;`;
 }
-
-function buildContactQrData({ name, phone, email }) {
-    return `BEGIN:VCARD\nVERSION:3.0\nN:${name}\nTEL:${phone}\nEMAIL:${email}\nEND:VCARD`;
-}

@@ -67,6 +67,27 @@ function naverHotelSearchUrl(cityName) {
     return `https://search.naver.com/search.naver?query=${encodeURIComponent(cityName + ' 호텔')}`;
 }
 
+// Naver blocks automated scraping of cafe/blog reviews (see project notes), so
+// we can't pull real review snippets in. This just hands off to a search for
+// the actual reviews instead of faking review content.
+function naverReviewSearchUrl(query) {
+    return `https://search.naver.com/search.naver?query=${encodeURIComponent(query + ' 후기')}`;
+}
+
+// map.naver.com/p/search needs an exact POI business name match (e.g. Seoul has
+// no single business literally named "서울 시외버스터미널" — it's split across
+// 서울고속버스터미널/센트럴시티/남부터미널), so it was falling back to a generic
+// city-level result. search.naver.com's general search handles this fuzzily,
+// same as the other deep links above.
+function naverBusTerminalSearchUrl(cityName) {
+    return `https://search.naver.com/search.naver?query=${encodeURIComponent(cityName + ' 시외버스터미널')}`;
+}
+
+// Korail's own site doesn't reflect search params (station/date) in the URL —
+// it's session-based — so there's no way to deep-link a filled-in result.
+// This just hands off to their generic ticket search entry point.
+const KORAIL_SEARCH_URL = 'https://www.korail.com/ticket/search/list';
+
 // ==================== Toast ====================
 function showToast(message, type = 'default', duration = 2600) {
     let container = document.getElementById('toast-container');
