@@ -292,9 +292,11 @@
         function renderPriceCheckSection() {
             const el = document.getElementById('priceCheckSection');
             const isDomesticByLand = ITINERARY.country === '대한민국' && ITINERARY.city !== '제주도';
+            const directionsUrl = isDomesticByLand ? terminalDirectionsUrl(ITINERARY.city) : null;
             const transportButtons = isDomesticByLand
                 ? `<a href="${KORAIL_SEARCH_URL}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚄 코레일 조회</a>
-                   <a href="${naverBusTerminalSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚌 시외버스터미널</a>`
+                   <a href="${naverBusTerminalSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚌 시외버스터미널</a>
+                   ${directionsUrl ? `<a href="${directionsUrl}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🗺️ 길찾기</a>` : ''}`
                 : `<a href="${naverFlightSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">✈️ 항공권 확인</a>`;
             el.innerHTML = `
                 <div class="card" style="padding:20px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">

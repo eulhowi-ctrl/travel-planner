@@ -76,11 +76,49 @@ function naverReviewSearchUrl(query) {
 
 // map.naver.com/p/search needs an exact POI business name match (e.g. Seoul has
 // no single business literally named "서울 시외버스터미널" — it's split across
-// 서울고속버스터미널/센트럴시티/남부터미널), so it was falling back to a generic
-// city-level result. search.naver.com's general search handles this fuzzily,
-// same as the other deep links above.
+// 서울고속버스터미널/센트럴시티/남부터미널). For destinations where we've verified
+// the real terminal name (and, importantly, which one — several of these cities
+// have two separate terminals in different locations for 고속버스 vs 시외버스, and
+// the Seoul-departing route only serves one of them), we use it for a direct
+// map.naver.com POI link. Anything else falls back to search.naver.com's fuzzy
+// general search, same as the other deep links above.
+const BUS_TERMINAL_NAMES = {
+    '부산': '부산종합버스터미널',
+    '강릉': '강릉고속버스터미널', // not 강릉시외버스터미널 — separate building, Seoul route goes here
+    '여수': '여수종합버스터미널',
+    '경주': '경주고속버스터미널', // not 경주시외버스터미널 — different operator/location, that one serves 포항·울산·대구
+    '속초': '속초고속버스터미널', // not 속초시외버스터미널 — separate, unintegrated terminal
+    '전주': '전주고속버스터미널', // not 전주시외버스공용터미널 — adjacent but separate
+    '통영': '통영종합버스터미널',
+};
+
 function naverBusTerminalSearchUrl(cityName) {
+    const exactName = BUS_TERMINAL_NAMES[cityName];
+    if (exactName) {
+        return `https://map.naver.com/p/search/${encodeURIComponent(exactName)}`;
+    }
     return `https://search.naver.com/search.naver?query=${encodeURIComponent(cityName + ' 시외버스터미널')}`;
+}
+
+// Naver Map directions need internal per-POI IDs we have no way to look up
+// (naver.com blocks scraping, see project notes), so real turn-by-turn
+// directions there are a dead end. Google's Directions URL API takes plain
+// place-name text for origin/destination and geocodes it itself — no ID
+// lookup needed — so this is the one place we can offer an actual route
+// instead of just a map search. Only destinations with a verified exact
+// terminal name (BUS_TERMINAL_NAMES) get this button.
+const SEOUL_TERMINAL_NAME = '서울고속버스터미널';
+
+function terminalDirectionsUrl(cityName) {
+    const exactName = BUS_TERMINAL_NAMES[cityName];
+    if (!exactName) return null;
+    const params = new URLSearchParams({
+        api: '1',
+        origin: SEOUL_TERMINAL_NAME,
+        destination: exactName,
+        travelmode: 'driving',
+    });
+    return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
 // Korail's own site doesn't reflect search params (station/date) in the URL —

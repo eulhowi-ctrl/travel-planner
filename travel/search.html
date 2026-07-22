@@ -437,6 +437,7 @@
                     ${d.country === '대한민국' && cityKey !== '제주도' ? `
                         <a href="${KORAIL_SEARCH_URL}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">🚄 코레일 조회</a>
                         <a href="${naverBusTerminalSearchUrl(cityKey)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">🚌 시외버스터미널</a>
+                        ${terminalDirectionsUrl(cityKey) ? `<a href="${terminalDirectionsUrl(cityKey)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">🗺️ 길찾기</a>` : ''}
                     ` : `
                         <a href="${naverFlightSearchUrl(cityKey)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">✈️ 항공권 가격 확인</a>
                     `}
