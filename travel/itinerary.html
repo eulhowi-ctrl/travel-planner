@@ -299,12 +299,20 @@
                 ? `<a href="${KORAIL_SEARCH_URL}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚄 코레일 조회</a>
                    <a href="${naverBusTerminalSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚌 시외버스터미널</a>
                    ${directionsUrl ? `<a href="${directionsUrl}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🗺️ 길찾기</a>` : ''}`
-                : `<a href="${naverFlightSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">✈️ 항공권 확인</a>`;
+                : `<a href="${naverFlightDeepLink(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">✈️ 항공권 가격·일정 확인</a>`;
+            const dates = getTripDates();
             el.innerHTML = `
                 <div class="card" style="padding:20px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                     <div>
                         <strong>💸 실시간 교통 · 숙소 가격 확인</strong>
                         <p class="text-muted" style="font-size:13px; margin-top:4px;">네이버에서 ${ITINERARY.city}의 실제 가격을 확인해보세요</p>
+                        ${isDomesticByLand ? '' : `
+                        <div class="flex gap-8" style="margin-top:10px; align-items:center;">
+                            <label style="font-size:12px; color:var(--color-gray-500);">항공권 조회 날짜</label>
+                            <input type="date" id="tripStartDate" value="${dates.start}" style="font-size:12px; padding:4px 8px;">
+                            <span style="font-size:12px; color:var(--color-gray-500);">~</span>
+                            <input type="date" id="tripEndDate" value="${dates.end}" style="font-size:12px; padding:4px 8px;">
+                        </div>`}
                     </div>
                     <div class="flex gap-8">
                         ${transportButtons}
@@ -312,6 +320,15 @@
                     </div>
                 </div>
             `;
+            if (!isDomesticByLand) {
+                const onDateChange = () => {
+                    const start = document.getElementById('tripStartDate').value;
+                    const end = document.getElementById('tripEndDate').value;
+                    if (start && end) { setTripDates(start, end); renderPriceCheckSection(); }
+                };
+                document.getElementById('tripStartDate').addEventListener('change', onDateChange);
+                document.getElementById('tripEndDate').addEventListener('change', onDateChange);
+            }
         }
 
         function renderTransportSection() {

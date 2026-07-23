@@ -439,7 +439,7 @@
                         <a href="${naverBusTerminalSearchUrl(cityKey)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">🚌 시외버스터미널</a>
                         ${terminalDirectionsUrl(cityKey) ? `<a href="${terminalDirectionsUrl(cityKey)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">🗺️ 길찾기</a>` : ''}
                     ` : `
-                        <a href="${naverFlightSearchUrl(cityKey)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">✈️ 항공권 가격 확인</a>
+                        <a href="${naverFlightDeepLink(cityKey)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">✈️ 항공권 가격·일정 확인</a>
                     `}
                     <a href="${naverHotelSearchUrl(cityKey)}" target="_blank" rel="noopener" class="btn btn-ghost btn-small">🏨 숙소 가격 확인</a>
                 </div>

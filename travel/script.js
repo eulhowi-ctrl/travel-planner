@@ -71,6 +71,41 @@ function naverFlightSearchUrl(cityName) {
     return `https://search.naver.com/search.naver?query=${encodeURIComponent(cityName + ' 항공권')}`;
 }
 
+// ==================== Flight Deep Link (real flight.naver.com results) ====================
+// Trip dates for the flight link default to "2 weeks out, 3 nights" unless the
+// user set real ones on the itinerary page (stored under 'tripDates').
+// Naver's own site is blocked for automated browsing (see project notes), so
+// this URL shape is unverified against a live response — it matches the one
+// real flight.naver.com URL a manual browse turned up, reused for every
+// destination via a per-city IATA code (AIRPORT_CODES in destinations-data.js).
+function getTripDates() {
+    const saved = getLS('tripDates', null);
+    if (saved && saved.start && saved.end) return saved;
+    const start = new Date();
+    start.setDate(start.getDate() + 14);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 3);
+    const fmt = d => d.toISOString().slice(0, 10);
+    return { start: fmt(start), end: fmt(end) };
+}
+
+function setTripDates(start, end) {
+    setLS('tripDates', { start, end });
+}
+
+const NAVER_FLIGHT_ORIGIN = 'ICN';
+
+// Falls back to the general search link when the destination has no airport
+// code (small towns with no commercial airport) rather than building a
+// broken URL for it.
+function naverFlightDeepLink(cityName) {
+    const destCode = typeof AIRPORT_CODES !== 'undefined' ? AIRPORT_CODES[cityName] : null;
+    if (!destCode || destCode === NAVER_FLIGHT_ORIGIN) return naverFlightSearchUrl(cityName);
+    const { start, end } = getTripDates();
+    const noDash = s => s.replace(/-/g, '');
+    return `https://flight.naver.com/flights/international/${NAVER_FLIGHT_ORIGIN}:airport-${destCode}:airport-${noDash(start)}/${destCode}:airport-${NAVER_FLIGHT_ORIGIN}:airport-${noDash(end)}?adult=1&fareType=Y`;
+}
+
 function naverHotelSearchUrl(cityName) {
     return `https://search.naver.com/search.naver?query=${encodeURIComponent(cityName + ' 호텔')}`;
 }

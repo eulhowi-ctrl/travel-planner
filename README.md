@@ -13,7 +13,7 @@
 TRAVEL은 백엔드 서버 없이 브라우저(LocalStorage)만으로 동작하는 여행 계획 앱입니다. 코드는 전부 `travel/` 폴더 안에 있으며, HTML/CSS/바닐라 JS 외에 별도 빌드 과정이 없습니다.
 
 **주요 기능:**
-- 🔍 35개국 423개 여행지 검색 (키워드/국가/테마/활동/가격/기간/계절 필터)
+- 🔍 76개국 627개 여행지 검색 (키워드/국가/테마/활동/가격/기간/계절 필터)
 - 🗺️ Leaflet 기반 실제 지도 + 가격 표시 마커
 - 📅 여행 일정 관리 및 위시리스트 → 자동 일정 생성
 - 🌤️ 실시간 날씨 (OpenWeather API, 키 없으면 데모 데이터로 자동 전환)
@@ -57,7 +57,7 @@ python -m http.server 8000
 |---|---|
 | `travel/index.html` ~ `travel/chatbot.html` | 12개 페이지 (홈/검색/일정/갤러리/위시리스트/예산/예약/패키지/커뮤니티/호스트/포인트/챗봇) |
 | `travel/script.js` | 공통 헤더/푸터 렌더링, 공유 헬퍼 |
-| `travel/destinations-data.js` | 여행지 데이터셋 (35개국 423곳) |
+| `travel/destinations-data.js` | 여행지 데이터셋 (76개국 627곳) |
 | `travel/community-script.js` | 커뮤니티 탭 렌더링 |
 
 ### 📖 배포
@@ -73,7 +73,7 @@ python -m http.server 8000
 TRAVEL is a client-only travel planning app — no backend, all state lives in LocalStorage. Everything lives under `travel/`: plain HTML/CSS/vanilla JS, no build step.
 
 **Key Features:**
-- 🔍 Search across 423 destinations in 35 countries (keyword/country/theme/activity/price/duration/season filters)
+- 🔍 Search across 627 destinations in 76 countries (keyword/country/theme/activity/price/duration/season filters)
 - 🗺️ Real Leaflet map with price-bubble markers
 - 📅 Itinerary management + auto-generated itinerary from your wishlist
 - 🌤️ Live weather via OpenWeather API (falls back to demo data if no key is set)
@@ -117,7 +117,7 @@ Opening `travel/index.html` directly from disk mostly works too, but serving ove
 |---|---|
 | `travel/index.html` – `travel/chatbot.html` | 12 pages (home/search/itinerary/gallery/wishlist/budget/booking/packages/community/host/rewards/chatbot) |
 | `travel/script.js` | Shared header/footer rendering and helpers |
-| `travel/destinations-data.js` | Destination dataset (423 places across 35 countries) |
+| `travel/destinations-data.js` | Destination dataset (627 places across 76 countries) |
 | `travel/community-script.js` | Community tab rendering |
 
 ### 📖 Deployment
