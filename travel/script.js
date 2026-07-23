@@ -6,7 +6,6 @@ const NAV_LINKS = [
     { page: 'home', label: '홈', href: 'index.html' },
     { page: 'search', label: '검색', href: 'search.html' },
     { page: 'wishlist', label: '위시리스트', href: 'wishlist.html' },
-    { page: 'community', label: '커뮤니티', href: 'community.html' },
     { page: 'chatbot', label: 'AI 챗봇', href: 'chatbot.html' },
     { page: 'packages', label: '패키지', href: 'packages.html' },
     { page: 'budget', label: '예산관리', href: 'budget.html' },
@@ -115,6 +114,31 @@ function naverHotelSearchUrl(cityName) {
 // the actual reviews instead of faking review content.
 function naverReviewSearchUrl(query) {
     return `https://search.naver.com/search.naver?query=${encodeURIComponent(query + ' 후기')}`;
+}
+
+// Naver Map's POI database only reliably covers Korean businesses — searching
+// it for an overseas place (a Rio restaurant, a Paris museum) just falls
+// through to Naver's generic web search instead of an actual map pin. Google
+// Maps has real worldwide POI coverage, so overseas destinations use this
+// deep link instead (see mapSearchUrl in itinerary.html, which picks between
+// the two based on country).
+function googleMapsSearchUrl(query) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+// Shared by itinerary.html and search.html: Naver Map search only resolves
+// real POIs inside Korea, so overseas destinations get the Google Maps link.
+function mapSearchUrl(query, country) {
+    return country === '대한민국'
+        ? `https://map.naver.com/p/search/${encodeURIComponent(query)}`
+        : googleMapsSearchUrl(query);
+}
+
+// Google search deep link for reviews — the Google-based equivalent of
+// naverReviewSearchUrl, used for destinations where Naver's Korean-blogger-
+// centric review corpus is less useful (see project notes on overseas coverage).
+function googleReviewSearchUrl(query) {
+    return `https://www.google.com/search?q=${encodeURIComponent(query + ' 후기')}`;
 }
 
 // map.naver.com/p/search needs an exact POI business name match (e.g. Seoul has
@@ -230,17 +254,13 @@ function renderFooter() {
                 <div class="footer-grid">
                     <div>
                         <h4>TRAVEL</h4>
-                        <p style="font-size:13px;">AI 개인화 여행 계획 + 커뮤니티</p>
+                        <p style="font-size:13px;">AI 개인화 여행 계획</p>
                     </div>
                     <div>
                         <h4>둘러보기</h4>
                         <a href="search.html">여행지 검색</a>
                         <a href="wishlist.html">위시리스트</a>
                         <a href="packages.html">패키지</a>
-                    </div>
-                    <div>
-                        <h4>커뮤니티</h4>
-                        <a href="community.html">Q&A / 여행기</a>
                         <a href="chatbot.html">AI 챗봇</a>
                     </div>
                     <div>

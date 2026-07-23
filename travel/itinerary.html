@@ -219,9 +219,14 @@
                     }
                     const tag = activityLabels[activityIdx % activityLabels.length];
                     activityIdx++;
+                    const mapQuery = dest.baseCity || dest.name;
+                    const isKorea = dest.country === '대한민국';
                     return {
                         time: slot.time, title: `${dest.name} ${tag} 코스`, desc: `${dest.name}에서 ${tag} 테마로 즐기는 일정이에요`,
-                        links: [{ label: '네이버맵', url: `https://map.naver.com/p/search/${encodeURIComponent(dest.baseCity || dest.name)}` }],
+                        links: [
+                            { label: '지도', url: mapSearchUrl(mapQuery, dest.country) },
+                            { label: '후기', url: isKorea ? naverReviewSearchUrl(mapQuery) : googleReviewSearchUrl(mapQuery) },
+                        ],
                     };
                 });
                 days.push({ day: d + 1, date: '', items });
@@ -232,13 +237,80 @@
             };
         }
 
+        // Hand-written day-by-day schedules for specific destination packages,
+        // keyed by the generated dest.name. These exist because the generic
+        // slot-filler above only ever produces placeholder text ("OO 역사 코스")
+        // with no real venue — fine as a default for 600+ auto-generated
+        // destinations, but useless for anyone actually planning the trip.
+        // Add more entries here as specific packages get curated content.
+        const HAND_WRITTEN_ITINERARIES = {
+            '리우데자네이루 시티 투어': {
+                title: '리우데자네이루 시티 투어 2일', city: '리우데자네이루', country: '브라질', dayCount: 2,
+                budgetItems: [
+                    { label: '항공/교통', amount: 3000000 },
+                    { label: '숙박', amount: 600000 },
+                    { label: '식사', amount: 400000 },
+                    { label: '활동', amount: 300000 },
+                    { label: '쇼핑', amount: 200000 },
+                ],
+                days: [
+                    {
+                        day: 1, date: '',
+                        items: [
+                            { time: '09:00', title: '코르코바도 예수상 (Cristo Redentor)', desc: '코스메벨류(Cosme Velho)역에서 코르코바도 열차 탑승 후 정상까지 이동. 성수기엔 며칠 전 매진되니 공식 사이트에서 사전 예약 필수', links: [
+                                { label: '열차 티켓 예매', url: 'https://www.tremdocorcovado.rio' },
+                                { label: '지도', url: googleMapsSearchUrl('Corcovado Christ the Redeemer Rio de Janeiro') },
+                            ]},
+                            { time: '12:30', title: '산타테레자 점심 - Aprazível', desc: '열대 정원이 내려다보이는 테라스에서 브라질 가정식을 즐기는 산타테레자 대표 레스토랑', links: [
+                                { label: '지도', url: googleMapsSearchUrl('Aprazível Santa Teresa Rio de Janeiro') },
+                            ]},
+                            { time: '14:30', title: '에스카다리아 셀라론 (Selarón Steps)', desc: '라파와 산타테레자를 잇는 형형색색 모자이크 계단, 무료 관람', links: [
+                                { label: '지도', url: googleMapsSearchUrl('Escadaria Selarón Rio de Janeiro') },
+                            ]},
+                            { time: '16:00', title: '산타테레자 트램 (Bondinho de Santa Teresa)', desc: '구시가 골목을 도는 관광용 노면전차 탑승', links: [
+                                { label: '지도', url: googleMapsSearchUrl('Bondinho de Santa Teresa Rio de Janeiro') },
+                            ]},
+                            { time: '19:00', title: '라파 저녁 - Rio Scenarium', desc: '3층짜리 앤티크 소품으로 꾸며진 삼바 라이브 클럽 겸 레스토랑', links: [
+                                { label: '지도', url: googleMapsSearchUrl('Rio Scenarium Lapa Rio de Janeiro') },
+                            ]},
+                        ]
+                    },
+                    {
+                        day: 2, date: '',
+                        items: [
+                            { time: '09:00', title: '팡지아수카르 (Pão de Açúcar) 케이블카', desc: '우르카 프라이아 베르멜랴역에서 2단 케이블카로 정상까지. 주말 시간대는 빠르게 매진되니 공식 사이트에서 사전 예약 추천', links: [
+                                { label: '케이블카 티켓 예매', url: 'https://www.bondinho.com.br' },
+                                { label: '지도', url: googleMapsSearchUrl('Sugarloaf Mountain Cable Car Urca Rio de Janeiro') },
+                            ]},
+                            { time: '12:00', title: '우르카 점심 - Bar Urca', desc: '구아나바라만을 바라보며 현지인들이 즐겨 찾는 캐주얼 바 겸 식당', links: [
+                                { label: '지도', url: googleMapsSearchUrl('Bar Urca Rio de Janeiro') },
+                            ]},
+                            { time: '14:30', title: '코파카바나 요새 & 해변 산책', desc: '포르치 지 코파카바나 내 콜롬보 카페 분점에서 커피 한 잔', links: [
+                                { label: '지도', url: googleMapsSearchUrl('Forte de Copacabana Rio de Janeiro') },
+                            ]},
+                            { time: '17:00', title: '아르푸아도르 바위 일몰 (Pedra do Arpoador)', desc: '해질녘 박수가 터지는 리우 대표 무료 일몰 명소', links: [
+                                { label: '지도', url: googleMapsSearchUrl('Pedra do Arpoador Rio de Janeiro') },
+                            ]},
+                            { time: '19:30', title: '이파네마 저녁 - Garota de Ipanema', desc: '보사노바 명곡 "이파네마에서 온 소녀"의 배경이 된 바 겸 레스토랑', links: [
+                                { label: '지도', url: googleMapsSearchUrl('Garota de Ipanema Rio de Janeiro') },
+                            ]},
+                        ]
+                    },
+                ]
+            },
+        };
+
         function resolveItinerary() {
             const generated = getLS('generatedItinerary', null);
             if (generated && generated.days && generated.days.length) return generated;
             const selectedId = Number(localStorage.getItem('selectedDestinationId'));
             if (selectedId) {
                 const dest = (typeof DESTINATIONS_FULL !== 'undefined' ? DESTINATIONS_FULL : []).find(d => d.id === selectedId);
-                if (dest && dest.baseCity !== '부산') return buildGenericItinerary(dest);
+                if (dest) {
+                    const handWritten = HAND_WRITTEN_ITINERARIES[dest.name];
+                    if (handWritten) return handWritten;
+                    if (dest.baseCity !== '부산') return buildGenericItinerary(dest);
+                }
             }
             return BUSAN_ITINERARY;
         }
@@ -260,6 +332,18 @@
                 ],
                 tip: '부산은 지하철+버스 환승이 잘 되어 있어 대중교통만으로도 충분히 여행 가능해요.',
             },
+            '리우데자네이루': {
+                longDistance: [
+                    { mode: '✈️ 항공', detail: '인천에서 직항 없음 · 로스앤젤레스/두바이/아디스아바바 등 경유, 총 24시간 이상' },
+                    { mode: '✈️ 국내선 환승', detail: '상파울루(GRU) 경유 시 리우 갈레앙국제공항(GIG)까지 국내선 추가 탑승' },
+                ],
+                local: [
+                    { mode: '🚇 메트로', detail: '1·2·4호선, 코파카바나·이파네마·센트루 연결 (산타테레자·코르코바두는 미연결)' },
+                    { mode: '🚗 우버·99', detail: '길거리 택시보다 우버(Uber)·99 앱이 요금 분쟁 없이 안전' },
+                    { mode: '🚋 산타테레자 트램', detail: '헤멘시아~산타테레자 구시가를 잇는 관광용 노면전차' },
+                ],
+                tip: '해변·센트루·라파 지역은 소매치기가 잦아요. 귀중품 노출을 최소화하고, 야간 이동은 도보 대신 우버를 이용하세요.',
+            },
         };
 
         // Local (insider) tips, separate from the transport-specific tip above.
@@ -269,13 +353,21 @@
                 '광안리보다 송정이 한적하고 서핑하기 좋아요.',
                 '해운대 주차는 주말엔 꽉 차니 지하철 이용을 추천해요.',
             ],
+            '리우데자네이루': [
+                '코르코바도 예수상 열차 티켓은 성수기에 며칠 전 매진되니 tremdocorcovado.rio에서 미리 예약하세요.',
+                '팡지아수카르 케이블카도 bondinho.com.br 공식 사이트에서 시간대 예약 후 방문하는 게 좋아요.',
+                '페이조아다(feijoada)는 전통적으로 토요일에만 제대로 된 걸 파는 식당이 많아요.',
+                '이파네마 아르푸아도르 바위는 무료로 일몰을 볼 수 있는 현지인 명소예요.',
+                '해변에서는 휴대폰·귀중품을 최소한만 들고 가는 게 안전해요.',
+            ],
         };
 
         function renderLocalTips() {
             const tips = LOCAL_TIPS[ITINERARY.city];
             const el = document.getElementById('localTipsSection');
             if (!tips) {
-                el.innerHTML = `<div class="card" style="padding:20px 24px;"><p class="text-muted" style="margin:0;">🧭 ${ITINERARY.city}의 현지인 팁은 아직 준비 중이에요.</p></div>`;
+                const tipsSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(ITINERARY.city + ' 현지인 여행 팁')}`;
+                el.innerHTML = `<div class="card" style="padding:20px 24px;"><p class="text-muted" style="margin:0;">🧭 ${ITINERARY.city}의 현지인 팁은 아직 준비된 게 없어요. <a href="${tipsSearchUrl}" target="_blank" rel="noopener">구글에서 찾아보기 →</a></p></div>`;
                 return;
             }
             el.innerHTML = `
@@ -299,7 +391,8 @@
                 ? `<a href="${KORAIL_SEARCH_URL}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚄 코레일 조회</a>
                    <a href="${naverBusTerminalSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚌 시외버스터미널</a>
                    ${directionsUrl ? `<a href="${directionsUrl}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🗺️ 길찾기</a>` : ''}`
-                : `<a href="${naverFlightDeepLink(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">✈️ 항공권 가격·일정 확인</a>`;
+                : `<a href="${naverFlightDeepLink(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">✈️ 항공권 가격·일정 확인</a>
+                   <a href="${googleMapsSearchUrl(ITINERARY.city + ' 국제공항')}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🛫 공항 위치</a>`;
             const dates = getTripDates();
             el.innerHTML = `
                 <div class="card" style="padding:20px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
@@ -380,7 +473,7 @@
                         const mapQuery = (fullDest && fullDest.baseCity) || item.name;
                         dayItems.push({
                             time: slot.time, title: item.name, desc: `${item.name} 방문 (위시리스트에서 자동 배치)`,
-                            links: [{ label: '네이버맵', url: `https://map.naver.com/p/search/${encodeURIComponent(mapQuery)}` }],
+                            links: [{ label: '지도', url: mapSearchUrl(mapQuery, fullDest ? fullDest.country : ITINERARY.country) }],
                         });
                     }
                 });
@@ -453,10 +546,13 @@
 
         function renderReviewSection() {
             const el = document.getElementById('reviewSection');
+            const isKorea = ITINERARY.country === '대한민국';
+            const reviewUrl = isKorea ? naverReviewSearchUrl(ITINERARY.city + ' 여행') : googleReviewSearchUrl(ITINERARY.city + ' 여행');
+            const source = isKorea ? '네이버 카페·블로그에' : '구글에';
             el.innerHTML = `
                 <div class="card" style="padding:20px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-                    <p class="text-muted" style="margin:0;">네이버 카페·블로그에 올라온 ${ITINERARY.city} 실제 여행 후기를 확인해보세요.</p>
-                    <a href="${naverReviewSearchUrl(ITINERARY.city + ' 여행')}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🔗 후기 보러가기</a>
+                    <p class="text-muted" style="margin:0;">${source} 올라온 ${ITINERARY.city} 실제 여행 후기를 확인해보세요.</p>
+                    <a href="${reviewUrl}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🔗 후기 보러가기</a>
                 </div>
             `;
         }

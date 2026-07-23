@@ -450,13 +450,24 @@ function generateDestinations() {
     const list = [];
     let id = 1;
     COUNTRY_SEEDS.forEach(country => {
+        // Cursor for which PACKAGE_STYLES entry the next themed variant gets,
+        // reset per country (so a country's first city always gets " 시티 투어"
+        // as its first variant — several fix comments elsewhere in this project
+        // reference "OO 시티 투어" as *the* single-variant name for that city, so
+        // that needs to stay stable) but advancing across that country's cities.
+        // Indexing by `v` alone (the per-city variant index) meant countries
+        // with >=6 cities (variantCount 2, so v only ever hits 0/1) could only
+        // ever produce style index 0 and never " 미식 여행"/" 자연 힐링" — and
+        // even 3-variant countries topped out at index 1, so " 자연 힐링"
+        // never appeared anywhere in the dataset.
+        let styleCursor = 0;
         country.cities.forEach(([name, lat, lng]) => {
             // Each city yields the base destination plus themed package variants
             // (mirrors local_setup's per-country generation pattern, scaled to 300+ total).
             const variantCount = country.cities.length >= 6 ? 2 : 3;
             for (let v = 0; v < variantCount; v++) {
                 const seed = id * 7.13;
-                const style = v === 0 ? null : PACKAGE_STYLES[(v - 1) % PACKAGE_STYLES.length];
+                const style = v === 0 ? null : PACKAGE_STYLES[styleCursor++ % PACKAGE_STYLES.length];
                 const theme = pick(THEMES, seed);
                 const season = pick(SEASONS, seed + 1);
                 const price = Math.round((30 + seededRandom(seed + 2) * 250) / 5) * 5;

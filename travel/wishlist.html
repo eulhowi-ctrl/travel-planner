@@ -38,7 +38,7 @@
                         <div class="text-muted" style="font-size:13px;">선택한 폴더 총 예상 비용</div>
                         <div class="total" id="folderTotal">0만원</div>
                     </div>
-                    <button class="btn btn-secondary" id="newFolderBtn">+ 새 폴더 (Ctrl+N)</button>
+                    <button class="btn btn-secondary" id="newFolderBtn">+ 새 폴더</button>
                 </div>
                 <div class="wish-item-grid" id="wishItemGrid"></div>
             </main>
@@ -140,13 +140,6 @@
             document.getElementById('createFolderBtn').addEventListener('click', createFolder);
             document.getElementById('newFolderName').addEventListener('keydown', e => { if (e.key === 'Enter') createFolder(); });
             document.getElementById('folderModal').addEventListener('click', e => { if (e.target.id === 'folderModal') closeFolderModal(); });
-
-            document.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
-                    e.preventDefault();
-                    openFolderModal();
-                }
-            });
         });
     </script>
 </body>
