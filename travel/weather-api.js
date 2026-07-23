@@ -39,7 +39,12 @@ function weatherIconEmoji(code) {
 }
 
 async function getWeather(city) {
-    if (WEATHER_CONFIG.demoMode || !WEATHER_CONFIG.apiKey || WEATHER_CONFIG.apiKey === '__OPENWEATHER_API_KEY__') {
+    // Checked via startsWith rather than an exact-match placeholder string:
+    // the deploy workflow's sed does a literal find/replace across the whole
+    // file, so a second copy of the exact placeholder text here would also
+    // get substituted with the real key, turning this into an always-true
+    // "key === itself" check that silently disables live weather forever.
+    if (WEATHER_CONFIG.demoMode || !WEATHER_CONFIG.apiKey || WEATHER_CONFIG.apiKey.startsWith('__')) {
         return { unavailable: true };
     }
     try {
