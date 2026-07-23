@@ -46,16 +46,6 @@
     .flow-step h4 { font-size: 15px; margin-bottom: 6px; }
     .flow-step p { font-size: 13px; color: var(--color-gray-500); }
 
-    .testimonial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    .testimonial-card { padding: 26px; }
-    .testimonial-stars { color: var(--color-warning); margin-bottom: 12px; letter-spacing: 2px; }
-    .testimonial-quote { font-size: 14px; color: var(--color-gray-700); margin-bottom: 16px; }
-    .testimonial-author { display: flex; align-items: center; gap: 10px; }
-    .avatar-circle {
-        width: 36px; height: 36px; border-radius: 50%; background: var(--color-accent);
-        display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px;
-    }
-
     .cta-banner {
         background: var(--color-dark); border-radius: var(--radius-lg); padding: 56px 40px; text-align: center;
         color: #fff;
@@ -65,7 +55,7 @@
 
     @media (max-width: 900px) {
         .hero .container { grid-template-columns: 1fr; }
-        .diff-grid, .flow-steps, .testimonial-grid { grid-template-columns: 1fr; }
+        .diff-grid, .flow-steps { grid-template-columns: 1fr; }
         .hero h1 { font-size: 32px; }
     }
 </style>
@@ -79,7 +69,7 @@
                 <span class="hero-eyebrow">🤖 AI 개인화 70% + 커뮤니티 30%</span>
                 <h1>당신만의 여행,<br>TRAVEL이 함께 계획합니다</h1>
                 <p class="lead">여행지 추천부터 일정 자동 생성, 예산 관리까지 한 곳에서.</p>
-                <p class="lead">실제 여행자들의 후기와 커뮤니티 정보로 더 확실하게.</p>
+                <p class="lead">장소마다 실제 네이버 카페·블로그 후기 링크로 더 확실하게.</p>
                 <div class="hero-cta">
                     <a href="search.html" class="btn btn-primary btn-large">여행지 둘러보기</a>
                     <a href="chatbot.html" class="btn btn-secondary btn-large">AI에게 추천받기</a>
@@ -137,39 +127,6 @@
                     <div class="step-num">4</div>
                     <h4>예약 & 공유</h4>
                     <p>예약하고 친구들과 일정을 공유하세요</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="container">
-            <h2 class="section-title text-center">여행자들의 이야기</h2>
-            <p class="section-subtitle text-center">TRAVEL과 함께한 여행 후기</p>
-            <div class="testimonial-grid">
-                <div class="card testimonial-card">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-quote">"장소마다 연결된 카페 링크 덕분에 정보 찾는 시간이 확 줄었어요."</p>
-                    <div class="testimonial-author">
-                        <div class="avatar-circle">민</div>
-                        <div><strong>김민지</strong><div class="text-muted" style="font-size:12px;">부산 3박4일</div></div>
-                    </div>
-                </div>
-                <div class="card testimonial-card">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-quote">"자동 일정 생성이 생각보다 훨씬 자연스러워서 놀랐어요."</p>
-                    <div class="testimonial-author">
-                        <div class="avatar-circle">준</div>
-                        <div><strong>이준호</strong><div class="text-muted" style="font-size:12px;">제주도 2박3일</div></div>
-                    </div>
-                </div>
-                <div class="card testimonial-card">
-                    <div class="testimonial-stars">★★★★☆</div>
-                    <p class="testimonial-quote">"여행 버디 기능으로 같이 갈 사람을 구해서 든든했습니다."</p>
-                    <div class="testimonial-author">
-                        <div class="avatar-circle">수</div>
-                        <div><strong>박수아</strong><div class="text-muted" style="font-size:12px;">도쿄 4박5일</div></div>
-                    </div>
                 </div>
             </div>
         </div>

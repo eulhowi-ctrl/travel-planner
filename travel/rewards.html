@@ -121,6 +121,7 @@
                     data.balance -= item.cost;
                     data.history.unshift({ desc: `${item.label} 교환`, points: -item.cost, date: new Date().toISOString() });
                     setLS('travelPoints', data);
+                    refreshHeaderPoints();
                     showToast(`${item.label}으로 교환했습니다`, 'success');
                     renderAll();
                 });

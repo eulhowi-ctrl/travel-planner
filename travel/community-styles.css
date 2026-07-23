@@ -26,12 +26,3 @@
 .buddy-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .buddy-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--color-accent); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; }
 .btn-buddy-contact { width: 100%; margin-top: 12px; }
-
-/* Ranking */
-.ranking-list { display: flex; flex-direction: column; gap: 10px; }
-.ranking-item { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: var(--color-white); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
-.ranking-item.top-3 { background: linear-gradient(90deg, rgba(255,184,77,0.12), transparent); border: 1px solid rgba(255,184,77,0.3); }
-.rank-num { font-size: 18px; font-weight: 700; color: var(--color-gray-500); width: 28px; text-align: center; }
-.ranking-item.top-3 .rank-num { color: #B8790F; }
-.ranking-info { flex: 1; }
-.ranking-stats { font-size: 12px; color: var(--color-gray-500); }

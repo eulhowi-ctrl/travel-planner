@@ -24,6 +24,7 @@ function renderQnaList() {
     document.getElementById('qnaList').innerHTML = all.map(q => `
         <div class="card qna-item">
             <div class="qna-question">${escapeHtml(q.title)}</div>
+            ${q.body ? `<p class="text-muted" style="font-size:14px;">${escapeHtml(q.body)}</p>` : ''}
             <div class="qna-meta">
                 <span>${escapeHtml(q.author)}</span>
                 <span>답변 ${q.answers || 0}개</span>
@@ -84,7 +85,7 @@ function submitWrite() {
     if (!title || !body) { showToast('제목과 내용을 모두 입력해주세요', 'error'); return; }
 
     const posts = getLS('communityPosts', []);
-    posts.unshift({ title, author: '나', answers: 0, tags: [] });
+    posts.unshift({ title, body, author: '나', answers: 0, tags: [] });
     setLS('communityPosts', posts);
 
     document.getElementById('writeTitleInput').value = '';

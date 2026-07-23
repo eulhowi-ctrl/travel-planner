@@ -233,6 +233,8 @@
         }
 
         function resolveItinerary() {
+            const generated = getLS('generatedItinerary', null);
+            if (generated && generated.days && generated.days.length) return generated;
             const selectedId = Number(localStorage.getItem('selectedDestinationId'));
             if (selectedId) {
                 const dest = (typeof DESTINATIONS_FULL !== 'undefined' ? DESTINATIONS_FULL : []).find(d => d.id === selectedId);
@@ -368,14 +370,19 @@
                 days.push({ day: d + 1, date: '', items: dayItems });
             }
 
-            const generated = { title: '자동 생성 일정', city: ITINERARY.city, days };
+            const totalPrice = items.reduce((s, i) => s + (i.price || 0), 0);
+            const generated = {
+                title: '자동 생성 일정', city: ITINERARY.city, country: ITINERARY.country || '대한민국',
+                dayCount: daysNeeded, days,
+                budgetItems: buildBudgetItems(totalPrice * 10000),
+            };
             setLS('generatedItinerary', generated);
-            ITINERARY.title = generated.title;
-            ITINERARY.days = generated.days;
+            Object.assign(ITINERARY, generated);
             document.getElementById('tripTitle').textContent = generated.title;
             document.getElementById('tripDates').textContent = `총 ${daysNeeded}일 일정 · 2인`;
             renderDayTabs();
             renderSchedule(0);
+            renderBudgetAnalysis();
             showToast(`위시리스트 ${items.length}개 장소로 ${daysNeeded}일 일정을 생성했습니다!`, 'success');
         }
 

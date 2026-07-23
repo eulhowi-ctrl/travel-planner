@@ -10,33 +10,6 @@ const WEATHER_CONFIG = {
     demoMode: false,
 };
 
-const DEMO_WEATHER = {
-    '서울': { temp: 27, condition: '맑음', icon: '☀️', rainChance: 10, uvIndex: 6, hourly: [
-        { time: '09:00', temp: 24, icon: '☀️' }, { time: '12:00', temp: 28, icon: '☀️' },
-        { time: '15:00', temp: 29, icon: '🌤️' }, { time: '18:00', temp: 25, icon: '🌥️' },
-    ]},
-    '부산': { temp: 29, condition: '구름 조금', icon: '🌤️', rainChance: 20, uvIndex: 8, hourly: [
-        { time: '09:00', temp: 26, icon: '🌤️' }, { time: '12:00', temp: 30, icon: '☀️' },
-        { time: '15:00', temp: 31, icon: '☀️' }, { time: '18:00', temp: 27, icon: '🌤️' },
-    ]},
-    '제주도': { temp: 26, condition: '흐림', icon: '☁️', rainChance: 65, uvIndex: 4, hourly: [
-        { time: '09:00', temp: 24, icon: '☁️' }, { time: '12:00', temp: 26, icon: '🌧️' },
-        { time: '15:00', temp: 25, icon: '🌧️' }, { time: '18:00', temp: 23, icon: '☁️' },
-    ]},
-    '도쿄': { temp: 30, condition: '맑음', icon: '☀️', rainChance: 5, uvIndex: 9, hourly: [
-        { time: '09:00', temp: 27, icon: '☀️' }, { time: '12:00', temp: 31, icon: '☀️' },
-        { time: '15:00', temp: 32, icon: '☀️' }, { time: '18:00', temp: 28, icon: '🌤️' },
-    ]},
-    '방콕': { temp: 34, condition: '한낮 소나기', icon: '⛈️', rainChance: 70, uvIndex: 10, hourly: [
-        { time: '09:00', temp: 31, icon: '🌤️' }, { time: '12:00', temp: 35, icon: '⛈️' },
-        { time: '15:00', temp: 33, icon: '⛈️' }, { time: '18:00', temp: 29, icon: '🌦️' },
-    ]},
-    '파리': { temp: 22, condition: '맑음', icon: '🌤️', rainChance: 15, uvIndex: 5, hourly: [
-        { time: '09:00', temp: 18, icon: '🌤️' }, { time: '12:00', temp: 23, icon: '☀️' },
-        { time: '15:00', temp: 24, icon: '☀️' }, { time: '18:00', temp: 20, icon: '🌤️' },
-    ]},
-};
-
 // OpenWeather's q= param doesn't resolve Korean city names, so cities are looked
 // up by lat/lon instead. A handful of demo cities are hardcoded below; every
 // other destination's coordinates come from destinations-data.js's
@@ -56,36 +29,58 @@ function lookupCityCoords(city) {
     return null;
 }
 
+// Maps OpenWeather's icon codes (e.g. "10d") to an emoji by their 2-digit condition prefix.
+const WEATHER_ICON_MAP = {
+    '01': '☀️', '02': '🌤️', '03': '⛅', '04': '☁️',
+    '09': '🌦️', '10': '🌧️', '11': '⛈️', '13': '❄️', '50': '🌫️',
+};
+function weatherIconEmoji(code) {
+    return WEATHER_ICON_MAP[(code || '').slice(0, 2)] || '🌤️';
+}
+
 async function getWeather(city) {
     if (WEATHER_CONFIG.demoMode || !WEATHER_CONFIG.apiKey || WEATHER_CONFIG.apiKey === '__OPENWEATHER_API_KEY__') {
-        return DEMO_WEATHER[city] || { unavailable: true };
+        return { unavailable: true };
     }
     try {
         const coords = lookupCityCoords(city);
-        const url = coords
-            ? `https://api.openweathermap.org/data/2.5/weather?lat=${coords[0]}&lon=${coords[1]}&appid=${WEATHER_CONFIG.apiKey}&units=metric&lang=kr`
-            : `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${WEATHER_CONFIG.apiKey}&units=metric&lang=kr`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('weather api request failed');
-        const data = await res.json();
+        const query = coords
+            ? `lat=${coords[0]}&lon=${coords[1]}`
+            : `q=${encodeURIComponent(city)}`;
+        const [currentRes, forecastRes] = await Promise.all([
+            fetch(`https://api.openweathermap.org/data/2.5/weather?${query}&appid=${WEATHER_CONFIG.apiKey}&units=metric&lang=kr`),
+            fetch(`https://api.openweathermap.org/data/2.5/forecast?${query}&appid=${WEATHER_CONFIG.apiKey}&units=metric&lang=kr`),
+        ]);
+        if (!currentRes.ok) throw new Error('weather api request failed');
+        const data = await currentRes.json();
+        // The 5-day/3-hour forecast endpoint doubles as our short-term "hourly"
+        // view and is the only free source of rain probability (pop). If it
+        // fails, rainChance stays unknown (null) rather than a fake 0/no-rain.
+        const forecast = forecastRes.ok ? await forecastRes.json() : null;
+        const upcoming = forecast ? forecast.list.slice(0, 4) : [];
         return {
             temp: Math.round(data.main.temp),
             condition: data.weather[0].description,
-            icon: '🌤️',
-            rainChance: 0,
-            uvIndex: 0,
-            hourly: [],
+            icon: weatherIconEmoji(data.weather[0].icon),
+            rainChance: upcoming.length ? Math.round(Math.max(...upcoming.map(f => f.pop || 0)) * 100) : null,
+            hourly: upcoming.map(f => ({
+                time: f.dt_txt.slice(11, 16),
+                temp: Math.round(f.main.temp),
+                icon: weatherIconEmoji(f.weather[0].icon),
+            })),
         };
     } catch (e) {
-        return DEMO_WEATHER[city] || { unavailable: true };
+        return { unavailable: true };
     }
 }
 
+// No free/confirmed-working OpenWeather endpoint currently supplies UV index
+// (the old uvi endpoint is deprecated), so tips are based only on data we
+// actually have — no fabricated UV warning.
 function getWeatherTips(weather) {
     const tips = [];
     if (weather.rainChance > 60) tips.push('☔ 강수 확률이 높아요. 실내 위주 일정을 추천해요.');
     if (weather.temp > 30) tips.push('🏊 무더운 날씨예요. 물놀이 명소가 좋아요.');
-    if (weather.uvIndex > 7) tips.push('🧴 자외선이 강해요. 선크림을 꼭 발라주세요.');
     if (!tips.length) tips.push('🙂 야외 활동하기 좋은 날씨예요.');
     return tips;
 }

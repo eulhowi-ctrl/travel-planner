@@ -44,7 +44,15 @@ function earnPoints(desc, points) {
     data.balance += points;
     data.history.unshift({ desc, points, date: new Date().toISOString() });
     setLS('travelPoints', data);
+    refreshHeaderPoints();
     return data;
+}
+
+// Call after any direct setLS('travelPoints', ...) write (e.g. redemptions)
+// that doesn't go through earnPoints, so the header pill stays in sync.
+function refreshHeaderPoints() {
+    const pill = document.getElementById('headerPointsPill');
+    if (pill) pill.textContent = `✨ ${getTravelPoints().balance.toLocaleString()}P`;
 }
 
 // ==================== Placeholder Photos ====================
@@ -158,7 +166,7 @@ function renderHeader(activePage) {
                 <a href="index.html" class="brand">TRA<span>VEL</span></a>
                 <nav class="main-nav">${navHtml}</nav>
                 <div class="header-actions">
-                    <a href="rewards.html" class="points-pill">✨ ${points.balance.toLocaleString()}P</a>
+                    <a href="rewards.html" class="points-pill" id="headerPointsPill">✨ ${points.balance.toLocaleString()}P</a>
                     <button class="btn btn-primary btn-small nav-toggle" id="navToggleBtn">☰</button>
                 </div>
             </div>
