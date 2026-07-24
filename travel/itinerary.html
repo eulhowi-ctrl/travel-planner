@@ -212,18 +212,29 @@
             const dayCount = DURATION_DAY_COUNT[dest.duration] || 2;
             const activityLabels = dest.tags.length ? dest.tags : ['대표 명소'];
             let activityIdx = 0;
+            const mapQuery = dest.baseCity || dest.name;
+            const isKorea = dest.country === '대한민국';
             const days = [];
             for (let d = 0; d < dayCount; d++) {
                 const items = GENERIC_SLOT_PATTERN.map(slot => {
                     if (slot.type === 'meal') {
-                        return { time: slot.time, title: '식사 시간', desc: `${dest.name} 현지 맛집에서 여유롭게 식사하세요`, links: [] };
+                        // liveQuery only set for Korea: Kakao Local only covers
+                        // domestic places, so overseas destinations keep the
+                        // placeholder text (see enhanceScheduleWithLiveSearch).
+                        return {
+                            time: slot.time, title: '식사 시간', desc: `${dest.name} 현지 맛집에서 여유롭게 식사하세요`,
+                            liveQuery: isKorea ? `${mapQuery} 맛집` : undefined,
+                            links: [
+                                { label: '지도', url: mapSearchUrl(mapQuery + ' 맛집', dest.country) },
+                                { label: '후기', url: isKorea ? naverReviewSearchUrl(mapQuery + ' 맛집') : googleReviewSearchUrl(mapQuery + ' 맛집') },
+                            ],
+                        };
                     }
                     const tag = activityLabels[activityIdx % activityLabels.length];
                     activityIdx++;
-                    const mapQuery = dest.baseCity || dest.name;
-                    const isKorea = dest.country === '대한민국';
                     return {
                         time: slot.time, title: `${dest.name} ${tag} 코스`, desc: `${dest.name}에서 ${tag} 테마로 즐기는 일정이에요`,
+                        liveQuery: isKorea ? `${mapQuery} ${tag}` : undefined,
                         links: [
                             { label: '지도', url: mapSearchUrl(mapQuery, dest.country) },
                             { label: '후기', url: isKorea ? naverReviewSearchUrl(mapQuery) : googleReviewSearchUrl(mapQuery) },
