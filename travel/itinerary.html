@@ -438,7 +438,7 @@
         // train/bus links instead of a flight search.
         function renderPriceCheckSection() {
             const el = document.getElementById('priceCheckSection');
-            const isDomesticByLand = ITINERARY.country === '대한민국' && ITINERARY.city !== '제주도';
+            const isDomesticByLand = ITINERARY.country === '대한민국' && !JEJU_CITIES.includes(ITINERARY.city);
             const directionsUrl = isDomesticByLand ? terminalDirectionsUrl(ITINERARY.city) : null;
             const transportButtons = isDomesticByLand
                 ? `<a href="${KORAIL_SEARCH_URL}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🚄 코레일 조회</a>
