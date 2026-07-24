@@ -621,13 +621,19 @@
             }
         }
 
-        // Real bus/subway/taxi time+fare would need a backend this static
-        // site doesn't have (see transit-info.js) — so this just links out
-        // to a real Kakao Map route between the two stops, no invented
-        // numbers, and the user picks 대중교통/자동차/도보 on Kakao's page.
-        function renderTransitSegment(segEl, from, to) {
+        // Bus/subway duration comes from Google Maps' DirectionsService
+        // (client-side SDK, no backend needed) when configured — Korea has
+        // no fare data there and no taxi/driving directions at all (see
+        // transit-info.js), so those stay off the summary line. The Kakao
+        // Map route link covers the rest (taxi fare included) once clicked.
+        async function renderTransitSegment(segEl, from, to) {
             const routeUrl = kakaoRouteUrl(from, to);
-            segEl.innerHTML = `다음 장소로 이동 <a href="${routeUrl}" target="_blank" rel="noopener" style="margin-left:8px;">🗺️ 길찾기</a>`;
+            const linkHtml = `<a href="${routeUrl}" target="_blank" rel="noopener" style="margin-left:8px;">🗺️ 길찾기</a>`;
+            segEl.innerHTML = `다음 장소로 이동 ${linkHtml}`;
+            const transit = await fetchTransitDuration(from, to);
+            if (transit) {
+                segEl.innerHTML = `🚌 대중교통 약 ${transit.minutes}분 ${linkHtml}`;
+            }
         }
 
         function renderBudgetAnalysis() {
