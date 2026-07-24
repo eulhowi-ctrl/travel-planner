@@ -399,13 +399,12 @@
                     <div>
                         <strong>💸 실시간 교통 · 숙소 가격 확인</strong>
                         <p class="text-muted" style="font-size:13px; margin-top:4px;">네이버에서 ${ITINERARY.city}의 실제 가격을 확인해보세요</p>
-                        ${isDomesticByLand ? '' : `
                         <div class="flex gap-8" style="margin-top:10px; align-items:center;">
-                            <label style="font-size:12px; color:var(--color-gray-500);">항공권 조회 날짜</label>
+                            <label style="font-size:12px; color:var(--color-gray-500); white-space:nowrap;">${isDomesticByLand ? '숙소 체크인·아웃 날짜' : '항공권·숙소 조회 날짜'}</label>
                             <input type="date" id="tripStartDate" value="${dates.start}" style="font-size:12px; padding:4px 8px;">
                             <span style="font-size:12px; color:var(--color-gray-500);">~</span>
                             <input type="date" id="tripEndDate" value="${dates.end}" style="font-size:12px; padding:4px 8px;">
-                        </div>`}
+                        </div>
                     </div>
                     <div class="flex gap-8">
                         ${transportButtons}
@@ -413,15 +412,13 @@
                     </div>
                 </div>
             `;
-            if (!isDomesticByLand) {
-                const onDateChange = () => {
-                    const start = document.getElementById('tripStartDate').value;
-                    const end = document.getElementById('tripEndDate').value;
-                    if (start && end) { setTripDates(start, end); renderPriceCheckSection(); }
-                };
-                document.getElementById('tripStartDate').addEventListener('change', onDateChange);
-                document.getElementById('tripEndDate').addEventListener('change', onDateChange);
-            }
+            const onDateChange = () => {
+                const start = document.getElementById('tripStartDate').value;
+                const end = document.getElementById('tripEndDate').value;
+                if (start && end) { setTripDates(start, end); renderPriceCheckSection(); }
+            };
+            document.getElementById('tripStartDate').addEventListener('change', onDateChange);
+            document.getElementById('tripEndDate').addEventListener('change', onDateChange);
         }
 
         function renderTransportSection() {
