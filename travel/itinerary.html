@@ -103,6 +103,7 @@
     <div id="footer-root"></div>
     <script src="script.js"></script>
     <script src="weather-api.js"></script>
+    <script src="kakao-places.js"></script>
     <script src="qr-generator.js"></script>
     <script src="destinations-data.js"></script>
     <script>
@@ -265,19 +266,19 @@
                                 { label: '지도', url: mapSearchUrl('여수교동시장', '대한민국') },
                                 { label: '후기', url: naverReviewSearchUrl('여수 교동시장') },
                             ]},
-                            { time: '12:00', title: '로타리식당 게장백반 점심', desc: '서시장 건너편(호남약국 골목)의 30년 전통 백반집. 간장게장·양념게장에 밑반찬 11가지가 함께 나오는 여수식 백반', links: [
+                            { time: '12:00', title: '로타리식당 게장백반 점심', desc: '서시장 건너편(호남약국 골목)의 30년 전통 백반집. 간장게장·양념게장에 밑반찬 11가지가 함께 나오는 여수식 백반', liveQuery: '여수 게장백반', links: [
                                 { label: '지도', url: mapSearchUrl('여수 로타리식당', '대한민국') },
                                 { label: '후기', url: naverReviewSearchUrl('여수 로타리식당') },
                             ]},
-                            { time: '14:30', title: '돌산 갓김치 쇼핑', desc: '여수 특산 돌산갓으로 담근 갓김치를 파는 전문점에서 선물용 포장 구매. 진공포장으로 여행 중 들고 다니기 좋음', links: [
+                            { time: '14:30', title: '돌산 갓김치 쇼핑', desc: '여수 특산 돌산갓으로 담근 갓김치를 파는 전문점에서 선물용 포장 구매. 진공포장으로 여행 중 들고 다니기 좋음', liveQuery: '여수 돌산갓김치', links: [
                                 { label: '지도', url: mapSearchUrl('황제돌산갓김치', '대한민국') },
                                 { label: '후기', url: naverReviewSearchUrl('여수 돌산갓김치') },
                             ]},
-                            { time: '16:30', title: '카페 라피끄 오션뷰 티타임', desc: '돌산읍 무술목길, 통유리창 너머로 남해 바다가 펼쳐지는 오션뷰 카페. 라스트오더 18:30', links: [
+                            { time: '16:30', title: '카페 라피끄 오션뷰 티타임', desc: '돌산읍 무술목길, 통유리창 너머로 남해 바다가 펼쳐지는 오션뷰 카페. 라스트오더 18:30', liveQuery: '여수 오션뷰 카페', links: [
                                 { label: '지도', url: mapSearchUrl('카페 라피끄 여수', '대한민국') },
                                 { label: '후기', url: naverReviewSearchUrl('여수 라피끄') },
                             ]},
-                            { time: '19:00', title: '하멜등대 낭만포차거리 저녁', desc: '이순신광장 인근 하멜등대 앞 포장마차 거리. 돌문어삼합에 여수밤바다 야경을 안주 삼아 하루 마무리', links: [
+                            { time: '19:00', title: '하멜등대 낭만포차거리 저녁', desc: '이순신광장 인근 하멜등대 앞 포장마차 거리. 돌문어삼합에 여수밤바다 야경을 안주 삼아 하루 마무리', liveQuery: '여수 낭만포차거리', links: [
                                 { label: '지도', url: mapSearchUrl('여수 하멜등대 낭만포차거리', '대한민국') },
                                 { label: '후기', url: naverReviewSearchUrl('여수 낭만포차거리') },
                             ]},
@@ -551,8 +552,8 @@
         function renderSchedule(dayIndex) {
             const day = ITINERARY.days[dayIndex];
             const el = document.getElementById('scheduleContainer');
-            el.innerHTML = day.items.map(item => `
-                <div class="schedule-item">
+            el.innerHTML = day.items.map((item, i) => `
+                <div class="schedule-item" data-item-index="${i}">
                     <div class="schedule-time">${item.time}</div>
                     <div class="schedule-body">
                         <h4>${item.title}</h4>
@@ -563,6 +564,30 @@
                     </div>
                 </div>
             `).join('');
+            enhanceScheduleWithLiveSearch(day, el);
+        }
+
+        // Some hand-written items carry a `liveQuery` — a Kakao Local keyword
+        // search run at render time so the recommendation stays current
+        // instead of being frozen at whatever was true when this itinerary
+        // was written (see kakao-places.js). Falls back to the hand-written
+        // venue silently (no key configured, SDK/network failure, or no
+        // results) rather than showing an error — the hand-written content is
+        // already on screen, so "no live update" just means it stays as-is.
+        function enhanceScheduleWithLiveSearch(day, containerEl) {
+            day.items.forEach((item, i) => {
+                if (!item.liveQuery) return;
+                kakaoTopPlace(item.liveQuery).then(place => {
+                    if (!place) return;
+                    const itemEl = containerEl.querySelector(`[data-item-index="${i}"]`);
+                    if (!itemEl) return;
+                    itemEl.querySelector('h4').textContent = place.name;
+                    itemEl.querySelector('p').textContent = `${item.desc} · ${place.address}`;
+                    itemEl.querySelector('.schedule-links').innerHTML =
+                        `<a href="${place.url}" target="_blank" rel="noopener">🔗 카카오맵</a>` +
+                        item.links.filter(l => l.label !== '지도').map(l => `<a href="${l.url}" target="_blank" rel="noopener">🔗 ${l.label}</a>`).join('');
+                });
+            });
         }
 
         function renderBudgetAnalysis() {

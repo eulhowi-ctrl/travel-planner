@@ -30,6 +30,11 @@ jobs:
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
         run: |
           sed -i "s/__OPENWEATHER_API_KEY__/${OPENWEATHER_API_KEY}/" travel/weather-api.js
+      - name: Inject Kakao JavaScript key
+        env:
+          KAKAO_JS_KEY: ${{ secrets.KAKAO_JS_KEY }}
+        run: |
+          sed -i "s/__KAKAO_JS_KEY__/${KAKAO_JS_KEY}/" travel/kakao-places.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
