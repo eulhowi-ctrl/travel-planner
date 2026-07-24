@@ -57,6 +57,8 @@ async function kakaoTopPlace(query) {
                     name: top.place_name,
                     address: top.road_address_name || top.address_name,
                     url: top.place_url,
+                    lat: Number(top.y),
+                    lng: Number(top.x),
                 });
             }, { size: 3 });
         } catch (e) {

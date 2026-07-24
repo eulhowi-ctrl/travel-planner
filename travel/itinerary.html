@@ -104,6 +104,7 @@
     <script src="script.js"></script>
     <script src="weather-api.js"></script>
     <script src="kakao-places.js"></script>
+    <script src="transit-info.js"></script>
     <script src="qr-generator.js"></script>
     <script src="destinations-data.js"></script>
     <script>
@@ -273,7 +274,7 @@
                     {
                         day: 1, date: '',
                         items: [
-                            { time: '09:30', title: '교동시장 아침 미식 투어', desc: '1965년부터 이어진 상설 수산시장. 갈치·서대·조개 등이 좌판 가득 쌓이는 새벽 활기는 오전에 가야 볼 수 있고, 오후 1~2시면 문 닫는 상인이 많음', links: [
+                            { time: '09:30', title: '교동시장 아침 미식 투어', desc: '1965년부터 이어진 상설 수산시장. 갈치·서대·조개 등이 좌판 가득 쌓이는 새벽 활기는 오전에 가야 볼 수 있고, 오후 1~2시면 문 닫는 상인이 많음', liveQuery: '여수 교동시장', links: [
                                 { label: '지도', url: mapSearchUrl('여수교동시장', '대한민국') },
                                 { label: '후기', url: naverReviewSearchUrl('여수 교동시장') },
                             ]},
@@ -574,6 +575,7 @@
                         </div>
                     </div>
                 </div>
+                ${i < day.items.length - 1 ? `<div class="transit-segment text-muted" data-transit-index="${i}" style="font-size:12px; padding:4px 0 4px 16px; margin:2px 0 2px 8px; border-left:2px dashed var(--color-gray-300);"></div>` : ''}
             `).join('');
             enhanceScheduleWithLiveSearch(day, el);
         }
@@ -585,10 +587,18 @@
         // venue silently (no key configured, SDK/network failure, or no
         // results) rather than showing an error — the hand-written content is
         // already on screen, so "no live update" just means it stays as-is.
+        //
+        // Each item's liveQuery search also returns coordinates, which —
+        // for Korea itineraries — double as the origin/destination for the
+        // transit segment between consecutive items (see transit-info.js).
+        // Items without a liveQuery (nothing to look up) just get no transit
+        // segment rather than a guessed one.
         function enhanceScheduleWithLiveSearch(day, containerEl) {
+            const isKorea = ITINERARY.country === '대한민국';
+            const placePromises = day.items.map(item => item.liveQuery ? kakaoTopPlace(item.liveQuery) : Promise.resolve(null));
+
             day.items.forEach((item, i) => {
-                if (!item.liveQuery) return;
-                kakaoTopPlace(item.liveQuery).then(place => {
+                placePromises[i].then(place => {
                     if (!place) return;
                     const itemEl = containerEl.querySelector(`[data-item-index="${i}"]`);
                     if (!itemEl) return;
@@ -599,6 +609,36 @@
                         item.links.filter(l => l.label !== '지도').map(l => `<a href="${l.url}" target="_blank" rel="noopener">🔗 ${l.label}</a>`).join('');
                 });
             });
+
+            if (!isKorea) return;
+            for (let i = 0; i < day.items.length - 1; i++) {
+                const segEl = containerEl.querySelector(`[data-transit-index="${i}"]`);
+                if (!segEl) continue;
+                Promise.all([placePromises[i], placePromises[i + 1]]).then(([from, to]) => {
+                    if (!from || !to) return;
+                    renderTransitSegment(segEl, from, to);
+                });
+            }
+        }
+
+        // Shows real bus/subway time+fare and a taxi-fare estimate (from the
+        // transit-proxy Worker) when configured, plus a real Kakao Map route
+        // link either way. No proxy configured / lookup failed -> just the
+        // link, no invented numbers (see fetchTransitInfo in transit-info.js).
+        async function renderTransitSegment(segEl, from, to) {
+            const routeUrl = kakaoRouteUrl(from, to);
+            const info = await fetchTransitInfo(from, to);
+            const parts = [];
+            if (info && info.transit) {
+                parts.push(`🚇 대중교통 약 ${info.transit.minutes}분 · ${info.transit.fare.toLocaleString()}원`);
+            }
+            if (info && info.taxi) {
+                parts.push(`🚕 택시 약 ${info.taxi.minutes}분 · 약 ${info.taxi.fare.toLocaleString()}원`);
+            }
+            segEl.innerHTML = `
+                ${parts.length ? parts.join(' &nbsp;·&nbsp; ') : '다음 장소로 이동'}
+                <a href="${routeUrl}" target="_blank" rel="noopener" style="margin-left:8px;">🗺️ 길찾기</a>
+            `;
         }
 
         function renderBudgetAnalysis() {
