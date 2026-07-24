@@ -244,6 +244,47 @@
         // destinations, but useless for anyone actually planning the trip.
         // Add more entries here as specific packages get curated content.
         const HAND_WRITTEN_ITINERARIES = {
+            // Researched via web search (top-rated/most-cited spot per category
+            // across DiningCode/식신/트리플 results) since 네이버 자체는 자동 스크래핑이
+            // 막혀 있어 실시간 상위 3곳 비교를 코드로 자동화할 수 없음 — 대신 검색으로
+            // 확인한 실존 장소를 직접 큐레이션. Verified 2026-07: 로타리식당(서시장
+            // 인근, 게장백반), 라피끄(돌산 무술목길, 오션뷰 카페), 하멜등대 낭만포차거리.
+            '여수 미식 여행': {
+                title: '여수 미식 여행 1일', city: '여수', country: '대한민국', dayCount: 1,
+                budgetItems: [
+                    { label: '교통', amount: 20000 },
+                    { label: '식사', amount: 90000 },
+                    { label: '입장/체험', amount: 10000 },
+                    { label: '쇼핑', amount: 30000 },
+                ],
+                days: [
+                    {
+                        day: 1, date: '',
+                        items: [
+                            { time: '09:30', title: '교동시장 아침 미식 투어', desc: '1965년부터 이어진 상설 수산시장. 갈치·서대·조개 등이 좌판 가득 쌓이는 새벽 활기는 오전에 가야 볼 수 있고, 오후 1~2시면 문 닫는 상인이 많음', links: [
+                                { label: '지도', url: mapSearchUrl('여수교동시장', '대한민국') },
+                                { label: '후기', url: naverReviewSearchUrl('여수 교동시장') },
+                            ]},
+                            { time: '12:00', title: '로타리식당 게장백반 점심', desc: '서시장 건너편(호남약국 골목)의 30년 전통 백반집. 간장게장·양념게장에 밑반찬 11가지가 함께 나오는 여수식 백반', links: [
+                                { label: '지도', url: mapSearchUrl('여수 로타리식당', '대한민국') },
+                                { label: '후기', url: naverReviewSearchUrl('여수 로타리식당') },
+                            ]},
+                            { time: '14:30', title: '돌산 갓김치 쇼핑', desc: '여수 특산 돌산갓으로 담근 갓김치를 파는 전문점에서 선물용 포장 구매. 진공포장으로 여행 중 들고 다니기 좋음', links: [
+                                { label: '지도', url: mapSearchUrl('황제돌산갓김치', '대한민국') },
+                                { label: '후기', url: naverReviewSearchUrl('여수 돌산갓김치') },
+                            ]},
+                            { time: '16:30', title: '카페 라피끄 오션뷰 티타임', desc: '돌산읍 무술목길, 통유리창 너머로 남해 바다가 펼쳐지는 오션뷰 카페. 라스트오더 18:30', links: [
+                                { label: '지도', url: mapSearchUrl('카페 라피끄 여수', '대한민국') },
+                                { label: '후기', url: naverReviewSearchUrl('여수 라피끄') },
+                            ]},
+                            { time: '19:00', title: '하멜등대 낭만포차거리 저녁', desc: '이순신광장 인근 하멜등대 앞 포장마차 거리. 돌문어삼합에 여수밤바다 야경을 안주 삼아 하루 마무리', links: [
+                                { label: '지도', url: mapSearchUrl('여수 하멜등대 낭만포차거리', '대한민국') },
+                                { label: '후기', url: naverReviewSearchUrl('여수 낭만포차거리') },
+                            ]},
+                        ]
+                    },
+                ]
+            },
             '리우데자네이루 시티 투어': {
                 title: '리우데자네이루 시티 투어 2일', city: '리우데자네이루', country: '브라질', dayCount: 2,
                 budgetItems: [
