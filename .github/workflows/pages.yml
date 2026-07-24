@@ -35,11 +35,6 @@ jobs:
           KAKAO_JS_KEY: ${{ secrets.KAKAO_JS_KEY }}
         run: |
           sed -i "s/__KAKAO_JS_KEY__/${KAKAO_JS_KEY}/" travel/kakao-places.js
-      - name: Inject transit proxy URL
-        env:
-          TRANSIT_PROXY_URL: ${{ secrets.TRANSIT_PROXY_URL }}
-        run: |
-          sed -i "s|__TRANSIT_PROXY_URL__|${TRANSIT_PROXY_URL}|" travel/transit-info.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

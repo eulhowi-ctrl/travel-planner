@@ -621,24 +621,13 @@
             }
         }
 
-        // Shows real bus/subway time+fare and a taxi-fare estimate (from the
-        // transit-proxy Worker) when configured, plus a real Kakao Map route
-        // link either way. No proxy configured / lookup failed -> just the
-        // link, no invented numbers (see fetchTransitInfo in transit-info.js).
-        async function renderTransitSegment(segEl, from, to) {
+        // Real bus/subway/taxi time+fare would need a backend this static
+        // site doesn't have (see transit-info.js) — so this just links out
+        // to a real Kakao Map route between the two stops, no invented
+        // numbers, and the user picks 대중교통/자동차/도보 on Kakao's page.
+        function renderTransitSegment(segEl, from, to) {
             const routeUrl = kakaoRouteUrl(from, to);
-            const info = await fetchTransitInfo(from, to);
-            const parts = [];
-            if (info && info.transit) {
-                parts.push(`🚇 대중교통 약 ${info.transit.minutes}분 · ${info.transit.fare.toLocaleString()}원`);
-            }
-            if (info && info.taxi) {
-                parts.push(`🚕 택시 약 ${info.taxi.minutes}분 · 약 ${info.taxi.fare.toLocaleString()}원`);
-            }
-            segEl.innerHTML = `
-                ${parts.length ? parts.join(' &nbsp;·&nbsp; ') : '다음 장소로 이동'}
-                <a href="${routeUrl}" target="_blank" rel="noopener" style="margin-left:8px;">🗺️ 길찾기</a>
-            `;
+            segEl.innerHTML = `다음 장소로 이동 <a href="${routeUrl}" target="_blank" rel="noopener" style="margin-left:8px;">🗺️ 길찾기</a>`;
         }
 
         function renderBudgetAnalysis() {
