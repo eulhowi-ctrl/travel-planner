@@ -105,7 +105,15 @@ function naverFlightDeepLink(cityName) {
     return `https://flight.naver.com/flights/international/${NAVER_FLIGHT_ORIGIN}:airport-${destCode}:airport-${noDash(start)}/${destCode}:airport-${NAVER_FLIGHT_ORIGIN}:airport-${noDash(end)}?adult=1&fareType=Y`;
 }
 
-function naverHotelSearchUrl(cityName) {
+// Korean destinations get a real hotels.naver.com deep link straight into the
+// domestic accommodation search results (verified working). Overseas cities
+// fall back to general search — the overseas path/param shape on
+// hotels.naver.com is unverified (naver.com is blocked for automated
+// browsing, see project notes), so we don't guess at it.
+function naverHotelSearchUrl(cityName, isKorea) {
+    if (isKorea) {
+        return `https://hotels.naver.com/accommodation/search/${encodeURIComponent(cityName + ' 호텔')}/domestic?sort=POPULAR_DESC&openTarget=checkIn&accommodationTypes=HOTEL%2CRESORT%2CRESIDENCE&adultCnt=2`;
+    }
     return `https://search.naver.com/search.naver?query=${encodeURIComponent(cityName + ' 호텔')}`;
 }
 

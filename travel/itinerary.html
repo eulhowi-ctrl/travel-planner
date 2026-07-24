@@ -409,7 +409,7 @@
                     </div>
                     <div class="flex gap-8">
                         ${transportButtons}
-                        <a href="${naverHotelSearchUrl(ITINERARY.city)}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🏨 숙소 확인</a>
+                        <a href="${naverHotelSearchUrl(ITINERARY.city, ITINERARY.country === '대한민국')}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">🏨 숙소 확인</a>
                     </div>
                 </div>
             `;
